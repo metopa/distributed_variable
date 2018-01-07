@@ -23,7 +23,7 @@ func main() {
 	}
 
 	ifaceName := flag.String("if", "",
-		"Network interface name. Available: " + strings.Join(ifaceNames, "|"))
+		"Network interface name. Available: "+strings.Join(ifaceNames, "|"))
 
 	flag.Parse()
 
@@ -38,16 +38,18 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	name := dv_common.PickRandomName()
 	fmt.Printf("Peer name: %s\n", name)
+	seen := make(map[string]bool)
 	service := dv_net.NewDiscoveryService(name, iface,
-		func(response string) { fmt.Printf("Hello from %s\n", response) })
+		func(response string) {
+			if seen[response] == false {
+				fmt.Printf("Hello from %s\n", response)
+				seen[response] = true
+			}
+		})
 	service.Start()
-	defer service.Stop()
 	time.Sleep(time.Second * 2)
-	service.SendDiscoveryRequest2()
-	time.Sleep(time.Second * 600)
-
-	//go dv_net.Listen()
-	//time.Sleep(time.Second)
-	//dv_net.Send()
-	//time.Sleep(time.Second)
+	service.SendDiscoveryRequest()
+	time.Sleep(time.Second * 60)
+	service.Stop()
+	time.Sleep(time.Second * 5)
 }

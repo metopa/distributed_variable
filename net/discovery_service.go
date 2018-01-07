@@ -1,6 +1,7 @@
 package net
 
 import (
+	"fmt"
 	"net"
 	"time"
 
@@ -10,11 +11,10 @@ import (
 	"github.com/metopa/distributed_variable/logger"
 )
 
-const MULTICAST_ADDR = "224.0.0.64"
-const LOCAL_ADDR = "localhost"
-const PORT=":7788"
+const MULTICAST_PORT = 7788
 
-var MULTICAST_GROUP = net.IPv4(224, 0, 0, 64)
+var MULTICAST_IP = net.IPv4(224, 0, 0, 64)
+var MULTICAST_ADDR = &net.UDPAddr{IP: MULTICAST_IP, Port: MULTICAST_PORT}
 
 type DiscoveryService struct {
 	started               bool
@@ -41,12 +41,16 @@ func (s *DiscoveryService) Start() {
 		logger.Warn("Tried to start UDP Discovery service twice")
 		return
 	}
+	logger.Info("Multicast interface: %v", s.iface)
 
-	s.packetConnTransport, err = net.ListenPacket("udp4", "0.0.0.0" + PORT)
+	s.packetConnTransport, err = net.ListenPacket("udp4", fmt.Sprintf(":%d", MULTICAST_PORT))
+	if err != nil {
+		logger.Fatal("%v", err)
+	}
 
 	s.packetConn = ipv4.NewPacketConn(s.packetConnTransport)
-	logger.Info("Multicast if: %v", s.iface)
-	err = s.packetConn.JoinGroup(s.iface, &net.UDPAddr{IP: MULTICAST_GROUP})
+
+	err = s.packetConn.JoinGroup(s.iface, &net.UDPAddr{IP: MULTICAST_IP})
 	if err != nil {
 		logger.Fatal("%v", err.Error())
 	}
@@ -73,29 +77,31 @@ func (s *DiscoveryService) Stop() {
 }
 
 func (s *DiscoveryService) SendDiscoveryRequest() {
-	//udpAddr, err := net.ResolveUDPAddr("udp", "0.0.0.0:8668")
-	dst := &net.UDPAddr{IP: MULTICAST_GROUP, Port: 7788}
 
-	conn, err := net.ListenPacket("udp",  "0.0.0.0:6886")
+	conn, err := net.ListenPacket("udp", ":0")
+	defer conn.Close()
 	if err != nil {
 		logger.Fatal("%v", err)
 	}
 	p := ipv4.NewPacketConn(conn)
 	p.SetMulticastInterface(s.iface)
-	p.SetMulticastTTL(10)
-	for i := 0; i <10; i++ {
-		n, err := p.WriteTo([]byte(s.ownDiscoverResponse), nil, dst)
-		logger.Info("Write to %v: %v, %v", dst, n, err)
-		time.Sleep(time.Second)
-	}
-}
+	p.SetMulticastTTL(2)
 
-func (s *DiscoveryService) SendDiscoveryRequest2() {
-	dst := &net.UDPAddr{IP: MULTICAST_GROUP, Port: 7788}
-	for i := 0; i <10; i++ {
-		n, err := s.packetConn.WriteTo([]byte(s.ownDiscoverResponse), nil, dst)
-		logger.Info("Write to %v: %v, %v", dst, n, err)
+	for {
+		n, err := p.WriteTo([]byte(s.ownDiscoverResponse), nil, MULTICAST_ADDR)
+
+		if err != nil {
+			logger.Fatal("%v", err)
+		}
+		if n != len(s.ownDiscoverResponse) {
+			logger.Warn("Discovery response was not transmitted as whole, repeating")
+			continue
+		}
+
+		break
 	}
+
+	logger.Info("Transmitted discovery response to %v", MULTICAST_ADDR)
 }
 
 func (s *DiscoveryService) listen() {
@@ -110,70 +116,21 @@ func (s *DiscoveryService) listen() {
 			return
 		default:
 			s.packetConnTransport.SetReadDeadline(time.Now().Add(time.Second * 5))
-			n, cm, src, err := s.packetConn.ReadFrom(buf)
+			n, cm, _, err := s.packetConn.ReadFrom(buf)
 			if err != nil {
 				if common.IsTimeoutError(err) {
 					logger.Info("UDP Discovery timeout")
 				} else {
 					logger.Fatal("%v", err)
 				}
-			} else if cm.Dst.IsMulticast() && cm.Dst.Equal(MULTICAST_GROUP) {
-				logger.Info("Datagram from %v[%v]: %v", src, cm, string(buf[:n]))
-				go s.discoveryEventHandler(string(buf[:n]))
+			} else if cm.Dst.IsMulticast() && cm.Dst.Equal(MULTICAST_IP) {
+				response := string(buf[:n])
+				if response != s.ownDiscoverResponse {
+					go s.discoveryEventHandler(response)
+				} else {
+					logger.Info("Got loopback response")
+				}
 			}
 		}
-	}
-}
-
-func Listen() {
-	const IF_NAME = "enp2s0"
-	iface, err := net.InterfaceByName(IF_NAME)
-	if err != nil {
-		logger.Fatal("%v", err)
-	}
-
-	udpAddr, err := net.ResolveUDPAddr("udp", MULTICAST_ADDR+":7655")
-	if err != nil {
-		logger.Fatal("ResolveUDPAddr: %v", err)
-	}
-
-	conn, err := net.ListenMulticastUDP("udp", iface, udpAddr)
-	if err != nil {
-		logger.Fatal("%v", err)
-	}
-
-	buf := make([]byte, 1024)
-	conn.SetReadDeadline(time.Now().Add(time.Second * 10))
-	n, src, err := conn.ReadFrom(buf)
-	logger.Info("Datagram from %v: %v", src, string(buf[:n]))
-	if err != nil {
-		logger.Fatal("ReadFrom: %v", err)
-	}
-}
-
-func Send() {
-	const IF_NAME = "enp2s0"
-	iface, err := net.InterfaceByName(IF_NAME)
-	if err != nil {
-		logger.Fatal("%v", err)
-	}
-	ma, err := iface.Addrs()
-	logger.Info("Local IP: %v -> %v", iface, ma)
-
-	dstAddr, err := net.ResolveUDPAddr("udp", MULTICAST_ADDR+":7655")
-	//udpAddr, err := net.ResolveUDPAddr("udp", ":7656")
-	if err != nil {
-		logger.Fatal("ResolveUDPAddr: %v", err)
-	}
-	conn, err := net.ListenUDP("udp", nil)
-
-	if err != nil {
-		logger.Fatal("%v", err)
-	}
-
-	_, err = conn.WriteTo([]byte("Hello"), dstAddr)
-	logger.Info("Datagram sent")
-	if err != nil {
-		logger.Fatal("WriteTo: %v", err)
 	}
 }
