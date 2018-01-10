@@ -91,30 +91,37 @@ func (s *DiscoveryService) Stop() {
 }
 
 func (s *DiscoveryService) SendDiscoveryRequest() {
-
-	conn, err := net.ListenPacket("udp", ":0")
-	defer conn.Close()
+	ifaces, err := net.Interfaces()
 	if err != nil {
 		logger.Fatal("%v", err)
 	}
-	p := ipv4.NewPacketConn(conn)
-	p.SetMulticastTTL(2)
 
-	for {
-		n, err := p.WriteTo([]byte(s.ownDiscoverResponse), nil, MULTICAST_ADDR)
-
+	for _, iface := range ifaces {
+		conn, err := net.ListenPacket("udp", ":0")
 		if err != nil {
 			logger.Fatal("%v", err)
 		}
-		if n != len(s.ownDiscoverResponse) {
-			logger.Warn("Discovery response was not transmitted as whole, repeating")
-			continue
+
+		p := ipv4.NewPacketConn(conn)
+		p.SetMulticastTTL(2)
+		p.SetMulticastInterface(&iface)
+		for {
+			n, err := p.WriteTo([]byte(s.ownDiscoverResponse), nil, MULTICAST_ADDR)
+
+			if err != nil {
+				logger.Fatal("%v", err)
+			}
+			if n != len(s.ownDiscoverResponse) {
+				logger.Warn("Discovery response was not transmitted as whole, repeating")
+				continue
+			}
+
+			break
 		}
+		conn.Close()
 
-		break
+		logger.Info("Sent discovery request to %v on %v", MULTICAST_ADDR, iface.Name)
 	}
-
-	logger.Info("Sent discovery request to %v", MULTICAST_ADDR)
 }
 
 func (s *DiscoveryService) listen() {
