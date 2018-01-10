@@ -109,10 +109,11 @@ func (s *DiscoveryService) SendDiscoveryRequest() {
 			n, err := p.WriteTo([]byte(s.ownDiscoverResponse), nil, MULTICAST_ADDR)
 
 			if err != nil {
-				logger.Warn("Failed to send discovery request on %v: %v", err)
+				logger.Warn("Failed to send discovery request on %v: %v", iface.Name, err)
+				break
 			}
 			if n != len(s.ownDiscoverResponse) {
-				logger.Warn("Discovery response was not transmitted as whole, repeating")
+				logger.Warn("Discovery request was not sent as whole, repeating")
 				continue
 			}
 
