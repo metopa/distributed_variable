@@ -1,3 +1,3 @@
 package net
 
-type Ring struct {}
+type Ring struct{}

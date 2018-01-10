@@ -1,11 +1,8 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"math/rand"
-	"net"
-	"strings"
 	"time"
 
 	dv_common "github.com/metopa/distributed_variable/common"
@@ -13,43 +10,36 @@ import (
 )
 
 func main() {
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		panic(err)
-	}
-	var ifaceNames []string
-	for _, i := range ifaces {
-		ifaceNames = append(ifaceNames, i.Name)
-	}
-
-	ifaceName := flag.String("if", "",
-		"Network interface name. Available: "+strings.Join(ifaceNames, "|"))
-
-	flag.Parse()
-
-	if *ifaceName == "" {
-		panic(fmt.Sprintf("Usage: %s -if <%s>", flag.Arg(0), strings.Join(ifaceNames, "|")))
-	}
-
-	iface, err := net.InterfaceByName(*ifaceName)
-	if err != nil {
-		panic(err)
-	}
+	//ifaceNames := dv_common.GetInterfaceNames()
+	//
+	//ifaceName := flag.String("if", "",
+	//	"Network interface name. Available: "+ifaceNames)
+	//
+	//flag.Parse()
+	//
+	//if *ifaceName == "" {
+	//	logger.Fatal("Usage: %s -if <%s>", flag.Arg(0), ifaceNames)
+	//}
+	//
+	//iface, err := net.InterfaceByName(*ifaceName)
+	//if err != nil {
+	//	panic(err)
+	//}
 	rand.Seed(time.Now().UnixNano())
-	name := dv_common.PickRandomName()
-	fmt.Printf("Peer name: %s\n", name)
-	seen := make(map[string]bool)
-	service := dv_net.NewDiscoveryService(name, iface,
+
+	ctx := dv_common.NewContext(dv_common.PickRandomName(), 3, time.Second)
+	fmt.Printf("Peer name: %s\n", ctx.Name)
+
+	server := dv_net.NewTcpServer(&dv_net.InitialCommandHandler{Ctx: ctx}, ctx)
+	server.Listen()
+
+	discoveryServer := dv_net.NewDiscoveryService(string(ctx.ServerAddr),
 		func(response string) {
-			if seen[response] == false {
-				fmt.Printf("Hello from %s\n", response)
-				seen[response] = true
-			}
+			dv_net.SendToDirectly(ctx, dv_common.PeerAddr(response),
+				dv_net.NewPeerInfoRequestCommand(ctx.Name))
 		})
-	service.Start()
-	time.Sleep(time.Second * 2)
-	service.SendDiscoveryRequest()
-	time.Sleep(time.Second * 60)
-	service.Stop()
-	time.Sleep(time.Second * 5)
+	discoveryServer.Start()
+	discoveryServer.SendDiscoveryRequest()
+	for {
+	}
 }

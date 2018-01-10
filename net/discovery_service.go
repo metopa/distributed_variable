@@ -21,16 +21,14 @@ type DiscoveryService struct {
 	ownDiscoverResponse   string
 	packetConnTransport   net.PacketConn
 	packetConn            *ipv4.PacketConn
-	iface                 *net.Interface
 	stopListenChan        chan struct{}
 	discoveryEventHandler func(discoverResponse string)
 }
 
-func NewDiscoveryService(discoverResponse string, iface *net.Interface,
+func NewDiscoveryService(discoverResponse string,
 	discoveryEventHandler func(discoverResponse string)) *DiscoveryService {
 	return &DiscoveryService{
 		ownDiscoverResponse:   discoverResponse,
-		iface:                 iface,
 		stopListenChan:        make(chan struct{}, 1),
 		discoveryEventHandler: discoveryEventHandler}
 }
@@ -41,19 +39,35 @@ func (s *DiscoveryService) Start() {
 		logger.Warn("Tried to start UDP Discovery service twice")
 		return
 	}
-	logger.Info("Multicast interface: %v", s.iface)
 
-	s.packetConnTransport, err = net.ListenPacket("udp4", fmt.Sprintf(":%d", MULTICAST_PORT))
+	s.packetConnTransport, err = net.ListenPacket("udp4",
+		fmt.Sprintf(":%d", MULTICAST_PORT))
 	if err != nil {
 		logger.Fatal("%v", err)
 	}
 
 	s.packetConn = ipv4.NewPacketConn(s.packetConnTransport)
 
-	err = s.packetConn.JoinGroup(s.iface, &net.UDPAddr{IP: MULTICAST_IP})
+	ifaces, err := net.Interfaces()
 	if err != nil {
-		logger.Fatal("%v", err.Error())
+		logger.Fatal("%v", err)
 	}
+
+	joinedAnyGroup := false
+	for _, iface := range ifaces {
+		err = s.packetConn.JoinGroup(&iface, &net.UDPAddr{IP: MULTICAST_IP})
+		if err != nil {
+			logger.Warn("Failed to join multicast group on %v: %v",
+				iface.Name, err)
+		} else {
+			logger.Info("Joined multicast group on %v", iface.Name)
+			joinedAnyGroup = true
+		}
+	}
+	if !joinedAnyGroup {
+		logger.Fatal("Failed to join any multicast group")
+	}
+
 	err = s.packetConn.SetControlMessage(ipv4.FlagDst, true)
 	if err != nil {
 		logger.Fatal("%v", err.Error())
@@ -84,7 +98,6 @@ func (s *DiscoveryService) SendDiscoveryRequest() {
 		logger.Fatal("%v", err)
 	}
 	p := ipv4.NewPacketConn(conn)
-	p.SetMulticastInterface(s.iface)
 	p.SetMulticastTTL(2)
 
 	for {
@@ -101,7 +114,7 @@ func (s *DiscoveryService) SendDiscoveryRequest() {
 		break
 	}
 
-	logger.Info("Transmitted discovery response to %v", MULTICAST_ADDR)
+	logger.Info("Sent discovery request to %v", MULTICAST_ADDR)
 }
 
 func (s *DiscoveryService) listen() {
@@ -115,11 +128,10 @@ func (s *DiscoveryService) listen() {
 			logger.Info("Shut down UDP Discovery service")
 			return
 		default:
-			s.packetConnTransport.SetReadDeadline(time.Now().Add(time.Second * 5))
+			s.packetConnTransport.SetReadDeadline(time.Now().Add(time.Second * 3))
 			n, cm, _, err := s.packetConn.ReadFrom(buf)
 			if err != nil {
 				if common.IsTimeoutError(err) {
-					logger.Info("UDP Discovery timeout")
 				} else {
 					logger.Fatal("%v", err)
 				}

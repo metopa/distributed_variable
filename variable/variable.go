@@ -14,7 +14,6 @@ type Variable interface {
 	Set(VariableType) error
 }
 
-
 type LocalVariable struct {
 	value VariableType
 }
@@ -22,7 +21,6 @@ type LocalVariable struct {
 type RemoteVariable struct {
 	ring net.Ring
 }
-
 
 func (v *LocalVariable) Get() (VariableType, error) {
 	return v.value, nil
@@ -32,7 +30,6 @@ func (v *LocalVariable) Set(value VariableType) error {
 	v.value = value
 	return nil
 }
-
 
 func (v *RemoteVariable) Get() (VariableType, error) {
 	return 0, errors.New("not implemented")
