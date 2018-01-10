@@ -109,7 +109,7 @@ func (s *DiscoveryService) SendDiscoveryRequest() {
 			n, err := p.WriteTo([]byte(s.ownDiscoverResponse), nil, MULTICAST_ADDR)
 
 			if err != nil {
-				logger.Warn("Failed to send discovery request on %v: %v", iface.Name, err)
+				logger.Warn("Failed to send discovery request on %v", iface.Name)
 				break
 			}
 			if n != len(s.ownDiscoverResponse) {
@@ -117,11 +117,11 @@ func (s *DiscoveryService) SendDiscoveryRequest() {
 				continue
 			}
 
+			logger.Info("Sent discovery request to %v on %v", MULTICAST_ADDR, iface.Name)
+
 			break
 		}
 		conn.Close()
-
-		logger.Info("Sent discovery request to %v on %v", MULTICAST_ADDR, iface.Name)
 	}
 }
 

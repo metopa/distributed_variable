@@ -6,6 +6,7 @@ import (
 	"time"
 
 	dv_common "github.com/metopa/distributed_variable/common"
+	"github.com/metopa/distributed_variable/logger"
 	dv_net "github.com/metopa/distributed_variable/net"
 )
 
@@ -35,6 +36,7 @@ func main() {
 
 	discoveryServer := dv_net.NewDiscoveryService(string(ctx.ServerAddr),
 		func(response string) {
+			logger.Info("New discovery response from %v", response)
 			dv_net.SendToDirectly(ctx, dv_common.PeerAddr(response),
 				dv_net.NewPeerInfoRequestCommand(ctx.Name))
 		})
