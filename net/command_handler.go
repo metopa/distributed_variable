@@ -29,7 +29,7 @@ func (h *InitialCommandHandler) NewPeer(sender common.PeerAddr, addr common.Peer
 	h.Ctx.AddNewPeer(name, addr)
 	logger.Info("Added new peer: %v(%v)", name, addr)
 	if shouldReply {
-		SendToDirectly(h.Ctx, addr, NewPeerInfoResponseCommand(name, h.Ctx.Leader))
+		SendToDirectly(h.Ctx, addr, NewPeerInfoResponseCommand(h.Ctx.Name, h.Ctx.Leader))
 	}
 }
 func (h *InitialCommandHandler) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr) {
