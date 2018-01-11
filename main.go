@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"math/rand"
 	"net"
 	"time"
@@ -26,17 +25,23 @@ func main() {
 
 	iface, err := net.InterfaceByName(*ifaceName)
 	if err != nil {
-		panic(err)
+		logger.Fatal("%v", err)
 	}
 	rand.Seed(time.Now().UnixNano())
 
 	ctx := dv_common.NewContext(dv_common.PickRandomName(), 3, time.Second)
-	fmt.Printf("Peer name: %s\n", ctx.Name)
 
 	server := dv_net.NewTcpServer(&dv_net.InitialCommandHandler{Ctx: ctx}, ctx)
 	server.Listen()
+	ifAddr, err := dv_common.GetInterfaceIPv4Addr(iface)
+	if err != nil {
+		logger.Fatal("%v", err)
+	}
+	ctx.ServerAddr = dv_common.PeerAddr((&net.TCPAddr{IP: ifAddr, Port: server.Port()}).String())
+	logger.Info("Peer name:    %s", ctx.Name)
+	logger.Info("Peer address: %s", string(ctx.ServerAddr))
 
-	discoveryServer := dv_net.NewDiscoveryService(string(ctx.ServerAddr),
+	discoveryServer := dv_net.NewDiscoveryServer(string(ctx.ServerAddr),
 		func(response string) {
 			logger.Info("New discovery response from %v", response)
 			dv_net.SendToDirectly(ctx, dv_common.PeerAddr(response),

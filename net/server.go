@@ -29,12 +29,11 @@ func (s *TcpServer) Listen() {
 	}
 
 	var err error
-	s.listener, err = net.ListenTCP("tcp", &net.TCPAddr{})
+	s.listener, err = net.ListenTCP("tcp4", &net.TCPAddr{})
 	if err != nil {
 		logger.Fatal("%v", err)
 	}
-	s.ctx.ServerAddr = common.PeerAddr(s.listener.Addr().String())
-	logger.Info("Started main server on %v", s.ServerAddr())
+	logger.Info("Started main server on %v", s.Port())
 	go s.accept()
 }
 
@@ -42,11 +41,15 @@ func (s *TcpServer) Stop() {
 	s.stop = true
 }
 
-func (s *TcpServer) ServerAddr() net.Addr {
+func (s *TcpServer) Port() int {
 	if s.listener == nil {
 		logger.Fatal("Main server is not running")
 	}
-	return s.listener.Addr()
+	addr, err := net.ResolveTCPAddr(s.listener.Addr().Network(), s.listener.Addr().String())
+	if err != nil {
+		logger.Fatal("%v", err)
+	}
+	return addr.Port
 }
 
 func (s *TcpServer) SetEventHandler(handler CommandHandler) {

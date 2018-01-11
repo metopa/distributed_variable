@@ -16,7 +16,7 @@ const MULTICAST_PORT = 7788
 var MULTICAST_IP = net.IPv4(224, 0, 0, 64)
 var MULTICAST_ADDR = &net.UDPAddr{IP: MULTICAST_IP, Port: MULTICAST_PORT}
 
-type DiscoveryService struct {
+type DiscoveryServer struct {
 	started               bool
 	ownDiscoverResponse   string
 	packetConnTransport   net.PacketConn
@@ -25,31 +25,15 @@ type DiscoveryService struct {
 	discoveryEventHandler func(discoverResponse string)
 }
 
-func NewDiscoveryService(discoverResponse string,
-	discoveryEventHandler func(discoverResponse string)) *DiscoveryService {
-	return &DiscoveryService{
+func NewDiscoveryServer(discoverResponse string,
+	discoveryEventHandler func(discoverResponse string)) *DiscoveryServer {
+	return &DiscoveryServer{
 		ownDiscoverResponse:   discoverResponse,
 		stopListenChan:        make(chan struct{}, 1),
 		discoveryEventHandler: discoveryEventHandler}
 }
 
-func (s *DiscoveryService) Start() {
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		logger.Fatal("%v", err)
-	}
-	var ifacesPtr []*net.Interface
-	for i, _ := range ifaces {
-		ifacesPtr = append(ifacesPtr, &ifaces[i])
-	}
-	s.startImpl(ifacesPtr)
-}
-
-func (s *DiscoveryService) StartOn(iface *net.Interface) {
-	s.startImpl([]*net.Interface{iface})
-}
-
-func (s *DiscoveryService) startImpl(ifaces []*net.Interface) {
+func (s *DiscoveryServer) StartOn(iface *net.Interface) {
 	var err error
 	if s.started {
 		logger.Warn("Tried to start UDP Discovery service twice")
@@ -64,21 +48,18 @@ func (s *DiscoveryService) startImpl(ifaces []*net.Interface) {
 
 	s.packetConn = ipv4.NewPacketConn(s.packetConnTransport)
 
-	joinedAnyGroup := false
-	for _, iface := range ifaces {
-		err = s.packetConn.JoinGroup(iface, &net.UDPAddr{IP: MULTICAST_IP})
-		if err != nil {
-			logger.Warn("Failed to join multicast group on %v: %v",
-				iface.Name, err)
-		} else {
-			logger.Info("Joined multicast group on %v", iface.Name)
-			joinedAnyGroup = true
-		}
-	}
-	if !joinedAnyGroup {
-		logger.Fatal("Failed to join any multicast group")
-	}
+	err = s.packetConn.JoinGroup(iface, &net.UDPAddr{IP: MULTICAST_IP})
+	if err != nil {
+		logger.Fatal("Failed to join multicast group on %v: %v",
+			iface.Name, err)
+	} else {
+		logger.Info("Joined multicast group on %v", iface.Name)
 
+	}
+	err = s.packetConn.SetMulticastInterface(iface)
+	if err != nil {
+		logger.Fatal("%v", err.Error())
+	}
 	err = s.packetConn.SetControlMessage(ipv4.FlagDst, true)
 	if err != nil {
 		logger.Fatal("%v", err.Error())
@@ -93,7 +74,8 @@ func (s *DiscoveryService) startImpl(ifaces []*net.Interface) {
 	logger.Info("Started UDP Discovery service")
 }
 
-func (s *DiscoveryService) Stop() {
+
+func (s *DiscoveryServer) Stop() {
 	if !s.started {
 		logger.Warn("Tried to stop UDP Discovery service twice")
 		return
@@ -101,7 +83,7 @@ func (s *DiscoveryService) Stop() {
 	s.stopListenChan <- struct{}{}
 }
 
-func (s *DiscoveryService) SendDiscoveryRequest() {
+func (s *DiscoveryServer) SendDiscoveryRequest() {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		logger.Fatal("%v", err)
@@ -112,7 +94,7 @@ func (s *DiscoveryService) SendDiscoveryRequest() {
 	}
 }
 
-func (s *DiscoveryService) SendDiscoveryRequestOn(iface *net.Interface) {
+func (s *DiscoveryServer) SendDiscoveryRequestOn(iface *net.Interface) {
 
 	conn, err := net.ListenPacket("udp", ":0")
 	if err != nil {
@@ -142,7 +124,7 @@ func (s *DiscoveryService) SendDiscoveryRequestOn(iface *net.Interface) {
 
 }
 
-func (s *DiscoveryService) listen() {
+func (s *DiscoveryServer) listen() {
 	defer s.packetConn.Close()
 	defer func() { s.started = false }()
 
