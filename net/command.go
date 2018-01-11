@@ -115,7 +115,7 @@ func dispatchCommand(handler CommandHandler, sender common.PeerAddr, cmd TcpComm
 		handler.NewPeer(sender, cmd.Source, cmd.Sarg[0], true)
 	case PEER_INFO_RESPONSE_CMD:
 		handler.NewPeer(sender, cmd.Source, cmd.Sarg[0], false)
-		if cmd.Sarg[2] != "" {
+		if cmd.Sarg[1] != "" {
 			handler.LeaderChanged(sender, common.PeerAddr(cmd.Sarg[1]))
 		}
 	case SET_LEADER_CMD:
