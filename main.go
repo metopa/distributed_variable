@@ -49,6 +49,5 @@ func main() {
 		})
 	discoveryServer.StartOn(iface)
 	discoveryServer.SendDiscoveryRequestOn(iface)
-	for {
-	}
+	time.Sleep(time.Hour)
 }
