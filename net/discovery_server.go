@@ -17,11 +17,10 @@ var MULTICAST_IP = net.IPv4(224, 0, 0, 64)
 var MULTICAST_ADDR = &net.UDPAddr{IP: MULTICAST_IP, Port: MULTICAST_PORT}
 
 type DiscoveryServer struct {
-	started               bool
+	stop                  bool
 	ownDiscoverResponse   string
 	packetConnTransport   net.PacketConn
 	packetConn            *ipv4.PacketConn
-	stopListenChan        chan struct{}
 	discoveryEventHandler func(discoverResponse string)
 }
 
@@ -29,16 +28,11 @@ func NewDiscoveryServer(discoverResponse string,
 	discoveryEventHandler func(discoverResponse string)) *DiscoveryServer {
 	return &DiscoveryServer{
 		ownDiscoverResponse:   discoverResponse,
-		stopListenChan:        make(chan struct{}, 1),
 		discoveryEventHandler: discoveryEventHandler}
 }
 
 func (s *DiscoveryServer) StartOn(iface *net.Interface) {
 	var err error
-	if s.started {
-		logger.Warn("Tried to start UDP Discovery service twice")
-		return
-	}
 
 	s.packetConnTransport, err = net.ListenPacket("udp4", fmt.Sprintf(":%d", MULTICAST_PORT))
 	if err != nil {
@@ -59,19 +53,13 @@ func (s *DiscoveryServer) StartOn(iface *net.Interface) {
 	if err != nil {
 		logger.Fatal("%v", err.Error())
 	}
-	s.started = true
 
 	go s.listen()
 	logger.Info("Started UDP Discovery service")
 }
 
-
 func (s *DiscoveryServer) Stop() {
-	if !s.started {
-		logger.Warn("Tried to stop UDP Discovery service twice")
-		return
-	}
-	s.stopListenChan <- struct{}{}
+	s.stop = true
 }
 
 func (s *DiscoveryServer) SendDiscoveryRequest() {
@@ -116,32 +104,27 @@ func (s *DiscoveryServer) SendDiscoveryRequestOn(iface *net.Interface) {
 }
 
 func (s *DiscoveryServer) listen() {
-	defer s.packetConn.Close()
-	defer func() { s.started = false }()
+	defer s.packetConnTransport.Close()
 
 	buf := make([]byte, 1024)
-	for {
-		select {
-		case _ = <-s.stopListenChan:
-			logger.Info("Shut down UDP Discovery service")
-			return
-		default:
-			s.packetConnTransport.SetReadDeadline(time.Now().Add(time.Second * 5))
-			n, cm, _, err := s.packetConn.ReadFrom(buf)
-			logger.Info("Read from: %v, %v, %v", n, cm, err)
-			if err != nil {
-				if common.IsTimeoutError(err) {
-				} else {
-					logger.Fatal("%v", err)
-				}
-			} else if cm.Dst.IsMulticast() && cm.Dst.Equal(MULTICAST_IP) {
-				response := string(buf[:n])
-				if response != s.ownDiscoverResponse {
-					go s.discoveryEventHandler(response)
-				} else {
-					logger.Info("Got loopback response")
-				}
+	for !s.stop {
+		s.packetConn.SetReadDeadline(time.Now().Add(time.Second * 5))
+		n, cm, _, err := s.packetConn.ReadFrom(buf)
+
+		logger.Info("Read from: %v, %v, %v", n, cm, err)
+		if err != nil {
+			if common.IsTimeoutError(err) {
+			} else {
+				logger.Fatal("%v", err)
+			}
+		} else if cm.Dst.IsMulticast() && cm.Dst.Equal(MULTICAST_IP) {
+			response := string(buf[:n])
+			if response != s.ownDiscoverResponse {
+				go s.discoveryEventHandler(response)
+			} else {
+				logger.Info("Got loopback response")
 			}
 		}
 	}
+	logger.Info("Shut down UDP Discovery service")
 }
