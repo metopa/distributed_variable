@@ -128,6 +128,7 @@ func (s *DiscoveryServer) listen() {
 		default:
 			s.packetConnTransport.SetReadDeadline(time.Now().Add(time.Second * 5))
 			n, cm, _, err := s.packetConn.ReadFrom(buf)
+			logger.Info("Read from: %v, %v, %v", n, cm, err)
 			if err != nil {
 				if common.IsTimeoutError(err) {
 				} else {
