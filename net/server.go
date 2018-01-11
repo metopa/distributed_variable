@@ -20,7 +20,7 @@ type TcpServer struct {
 }
 
 func NewTcpServer(handler CommandHandler, context *common.Context) *TcpServer {
-	return &TcpServer{ctx: context}
+	return &TcpServer{ctx: context, eventHandler: handler}
 }
 
 func (s *TcpServer) Listen() {

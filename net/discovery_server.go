@@ -40,8 +40,7 @@ func (s *DiscoveryServer) StartOn(iface *net.Interface) {
 		return
 	}
 
-	s.packetConnTransport, err = net.ListenPacket("udp4",
-		fmt.Sprintf(":%d", MULTICAST_PORT))
+	s.packetConnTransport, err = net.ListenPacket("udp4", fmt.Sprintf(":%d", MULTICAST_PORT))
 	if err != nil {
 		logger.Fatal("%v", err)
 	}
@@ -49,14 +48,6 @@ func (s *DiscoveryServer) StartOn(iface *net.Interface) {
 	s.packetConn = ipv4.NewPacketConn(s.packetConnTransport)
 
 	err = s.packetConn.JoinGroup(iface, &net.UDPAddr{IP: MULTICAST_IP})
-	if err != nil {
-		logger.Fatal("Failed to join multicast group on %v: %v",
-			iface.Name, err)
-	} else {
-		logger.Info("Joined multicast group on %v", iface.Name)
-
-	}
-	err = s.packetConn.SetMulticastInterface(iface)
 	if err != nil {
 		logger.Fatal("%v", err.Error())
 	}
@@ -135,7 +126,7 @@ func (s *DiscoveryServer) listen() {
 			logger.Info("Shut down UDP Discovery service")
 			return
 		default:
-			s.packetConnTransport.SetReadDeadline(time.Now().Add(time.Second * 3))
+			s.packetConnTransport.SetReadDeadline(time.Now().Add(time.Second * 5))
 			n, cm, _, err := s.packetConn.ReadFrom(buf)
 			if err != nil {
 				if common.IsTimeoutError(err) {
