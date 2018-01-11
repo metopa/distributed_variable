@@ -83,13 +83,14 @@ func (s *TcpServer) handleConnection(conn *net.TCPConn) {
 	}
 	logger.Info("Session #%v(%v): Received %v", sessionId, conn.RemoteAddr(), cmd)
 
-	cmd.Ttl--
-	if cmd.Ttl <= 0 {
-		logger.Warn("Session #%v(%v): TTL expired", sessionId, conn.RemoteAddr())
-		return
-	}
+
 
 	if cmd.Destination != s.ctx.ServerAddr {
+		cmd.Ttl--
+		if cmd.Ttl <= 0 {
+			logger.Warn("Session #%v(%v): TTL expired", sessionId, conn.RemoteAddr())
+			return
+		}
 		//t.Forward(cmd)
 		//TODO
 		return

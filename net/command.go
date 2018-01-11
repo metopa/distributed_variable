@@ -39,7 +39,6 @@ var cmdNames = []string{
 	"SET_RESPONSE_CMD",
 }
 
-const DEFAULT_TTL = 20
 
 type TcpCommand struct {
 	Op          int

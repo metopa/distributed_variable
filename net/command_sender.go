@@ -9,12 +9,17 @@ import (
 	"github.com/metopa/distributed_variable/logger"
 )
 
+const DEFAULT_TTL = 20
+
 func SendToDirectly(ctx *common.Context, destination common.PeerAddr, cmd TcpCommand) {
 	if cmd.Source == "" {
 		cmd.Source = ctx.ServerAddr
 	}
 	if cmd.Destination == "" {
 		cmd.Destination = destination
+	}
+	if cmd.Ttl == 0 {
+		cmd.Ttl = DEFAULT_TTL
 	}
 	destAddr, err := net.ResolveTCPAddr("tcp", string(destination))
 	if err != nil {
