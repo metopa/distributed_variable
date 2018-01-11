@@ -1,8 +1,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"math/rand"
+	"net"
 	"time"
 
 	dv_common "github.com/metopa/distributed_variable/common"
@@ -11,21 +13,21 @@ import (
 )
 
 func main() {
-	//ifaceNames := dv_common.GetInterfaceNames()
-	//
-	//ifaceName := flag.String("if", "",
-	//	"Network interface name. Available: "+ifaceNames)
-	//
-	//flag.Parse()
-	//
-	//if *ifaceName == "" {
-	//	logger.Fatal("Usage: %s -if <%s>", flag.Arg(0), ifaceNames)
-	//}
-	//
-	//iface, err := net.InterfaceByName(*ifaceName)
-	//if err != nil {
-	//	panic(err)
-	//}
+	ifaceNames := dv_common.GetInterfaceNames()
+
+	ifaceName := flag.String("if", "",
+		"Network interface name. Available: "+ifaceNames)
+
+	flag.Parse()
+
+	if *ifaceName == "" {
+		logger.Fatal("Usage: %s -if <%s>", flag.Arg(0), ifaceNames)
+	}
+
+	iface, err := net.InterfaceByName(*ifaceName)
+	if err != nil {
+		panic(err)
+	}
 	rand.Seed(time.Now().UnixNano())
 
 	ctx := dv_common.NewContext(dv_common.PickRandomName(), 3, time.Second)
@@ -40,8 +42,8 @@ func main() {
 			dv_net.SendToDirectly(ctx, dv_common.PeerAddr(response),
 				dv_net.NewPeerInfoRequestCommand(ctx.Name))
 		})
-	discoveryServer.Start()
-	discoveryServer.SendDiscoveryRequest()
+	discoveryServer.StartOn(iface)
+	discoveryServer.SendDiscoveryRequestOn(iface)
 	for {
 	}
 }

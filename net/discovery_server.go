@@ -34,6 +34,22 @@ func NewDiscoveryService(discoverResponse string,
 }
 
 func (s *DiscoveryService) Start() {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		logger.Fatal("%v", err)
+	}
+	var ifacesPtr []*net.Interface
+	for i, _ := range ifaces {
+		ifacesPtr = append(ifacesPtr, &ifaces[i])
+	}
+	s.startImpl(ifacesPtr)
+}
+
+func (s *DiscoveryService) StartOn(iface *net.Interface) {
+	s.startImpl([]*net.Interface{iface})
+}
+
+func (s *DiscoveryService) startImpl(ifaces []*net.Interface) {
 	var err error
 	if s.started {
 		logger.Warn("Tried to start UDP Discovery service twice")
@@ -48,14 +64,9 @@ func (s *DiscoveryService) Start() {
 
 	s.packetConn = ipv4.NewPacketConn(s.packetConnTransport)
 
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		logger.Fatal("%v", err)
-	}
-
 	joinedAnyGroup := false
 	for _, iface := range ifaces {
-		err = s.packetConn.JoinGroup(&iface, &net.UDPAddr{IP: MULTICAST_IP})
+		err = s.packetConn.JoinGroup(iface, &net.UDPAddr{IP: MULTICAST_IP})
 		if err != nil {
 			logger.Warn("Failed to join multicast group on %v: %v",
 				iface.Name, err)
@@ -97,32 +108,38 @@ func (s *DiscoveryService) SendDiscoveryRequest() {
 	}
 
 	for _, iface := range ifaces {
-		conn, err := net.ListenPacket("udp", ":0")
+		s.SendDiscoveryRequestOn(&iface)
+	}
+}
+
+func (s *DiscoveryService) SendDiscoveryRequestOn(iface *net.Interface) {
+
+	conn, err := net.ListenPacket("udp", ":0")
+	if err != nil {
+		logger.Fatal("%v", err)
+	}
+
+	p := ipv4.NewPacketConn(conn)
+	p.SetMulticastInterface(iface)
+	p.SetMulticastTTL(2)
+	for {
+		n, err := p.WriteTo([]byte(s.ownDiscoverResponse), nil, MULTICAST_ADDR)
+
 		if err != nil {
-			logger.Fatal("%v", err)
-		}
-
-		p := ipv4.NewPacketConn(conn)
-		p.SetMulticastTTL(2)
-		p.SetMulticastInterface(&iface)
-		for {
-			n, err := p.WriteTo([]byte(s.ownDiscoverResponse), nil, MULTICAST_ADDR)
-
-			if err != nil {
-				logger.Warn("Failed to send discovery request on %v", iface.Name)
-				break
-			}
-			if n != len(s.ownDiscoverResponse) {
-				logger.Warn("Discovery request was not sent as whole, repeating")
-				continue
-			}
-
-			logger.Info("Sent discovery request to %v on %v", MULTICAST_ADDR, iface.Name)
-
+			logger.Warn("Failed to send discovery request on %v", iface.Name)
 			break
 		}
-		conn.Close()
+		if n != len(s.ownDiscoverResponse) {
+			logger.Warn("Discovery request was not sent as whole, repeating")
+			continue
+		}
+
+		logger.Info("Sent discovery request to %v on %v", MULTICAST_ADDR, iface.Name)
+
+		break
 	}
+	conn.Close()
+
 }
 
 func (s *DiscoveryService) listen() {
