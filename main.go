@@ -31,7 +31,7 @@ func main() {
 	}
 	rand.Seed(time.Now().UnixNano())
 
-	ctx := common.NewContext(common.PickRandomName(), 3, time.Second, time.Second*5)
+	ctx := common.NewContext(common.PickRandomName(), 3, time.Second, time.Second*2)
 	ctx.State = &state.DiscoveryState{Ctx: ctx}
 	server := dv_net.NewTcpServer(ctx)
 

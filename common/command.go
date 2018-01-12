@@ -47,6 +47,7 @@ type TcpCommand struct {
 	Iarg        []int
 	Source      PeerAddr
 	Destination PeerAddr
+	From 		PeerAddr
 	Ttl         int
 }
 

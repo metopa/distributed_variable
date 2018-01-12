@@ -18,6 +18,7 @@ func SendToDirectly(ctx *common.Context, destination common.PeerAddr, cmd common
 	if cmd.Destination == "" {
 		cmd.Destination = destination
 	}
+	cmd.From = ctx.ServerAddr
 	if cmd.Ttl == 0 {
 		cmd.Ttl = DEFAULT_TTL
 	}

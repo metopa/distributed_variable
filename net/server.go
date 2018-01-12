@@ -72,7 +72,7 @@ func (s *TcpServer) accept() {
 func (s *TcpServer) handleConnection(conn *net.TCPConn) {
 	sessionId := atomic.AddUint64(&localSessionIdCounter, 1)
 	cmd, err := decodeCommand(conn)
-	senderAddr := common.PeerAddr(conn.RemoteAddr().String())
+	senderAddr := cmd.From
 	sender := s.ctx.ResolvePeerName(senderAddr)
 	conn.Close()
 	if err != nil {
