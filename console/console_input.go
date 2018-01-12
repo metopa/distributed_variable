@@ -55,7 +55,7 @@ func handleAction(action string, handler common.ActionHandler) {
 		if m != nil {
 			n, err := strconv.Atoi(string(m[1]))
 			if err != nil {
-				fmt.Printf("Failed to parse number: %v", err)
+				fmt.Printf("Failed to parse number: %v->%v\n", string(m[1]), err)
 			} else {
 				go handler.ActionSetValue(n)
 			}
