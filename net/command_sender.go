@@ -40,7 +40,9 @@ func SendToDirectly(ctx *common.Context, destination common.PeerAddr, cmd common
 			time.Sleep(ctx.SendRetryPause)
 			continue
 		}
-		logger.Info("New transmission")
+		logger.Info("New transmission: %v",
+			common.GetTransmissionInfoString(
+				cmd.Source, ctx.ServerAddr, destination, cmd.Destination))
 		return
 	}
 

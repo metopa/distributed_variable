@@ -42,3 +42,20 @@ func GetInterfaceIPv4Addr(iface *net.Interface) (net.IP, error) {
 	}
 	return nil, fmt.Errorf("%v has no IPv4 address", iface.Name)
 }
+
+func GetTransmissionInfoString(source, from, to, destination PeerAddr) string {
+	strip := func(s PeerAddr) string {
+		ip := strings.Split(string(s), ":")
+		ip = strings.Split(ip[0], ".")
+		return ip[len(ip) - 1]
+	}
+	res := strip(source) + "-"
+	if from != source {
+		res += "-" + strip(from)
+	}
+	if to != destination {
+		res += ".." + strip(to)
+	}
+	res += "->" + strip(destination)
+	return res
+}
