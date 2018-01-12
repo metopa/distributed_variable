@@ -1,7 +1,6 @@
 package common
 
 import (
-	"fmt"
 	"math/rand"
 	"sync"
 	"time"
@@ -18,7 +17,8 @@ type Context struct {
 	SendNumRetries   int
 	SendRetryPause   time.Duration
 	ChRoTimerDur     time.Duration
-	Server           HandlerOwner
+	State            State
+	StateSync        sync.Mutex
 	Sync             sync.Mutex
 	StartedChRoTimer int32
 }
@@ -34,6 +34,9 @@ func NewContext(name string, sendNumRetries int, sendRetryPause, chRoTimerDur ti
 }
 
 func (ctx *Context) AddNewPeer(name string, addr PeerAddr) {
+	if addr == ctx.ServerAddr {
+		return
+	}
 	ctx.Sync.Lock()
 	defer ctx.Sync.Unlock()
 	if _, ok := ctx.KnownPeers[addr]; !ok {
@@ -43,14 +46,12 @@ func (ctx *Context) AddNewPeer(name string, addr PeerAddr) {
 			ctx.LinkedPeers[0] < addr && addr < ctx.ServerAddr ||
 			ctx.ServerAddr < ctx.LinkedPeers[0] &&
 				(ctx.LinkedPeers[0] < addr || addr < ctx.ServerAddr) {
-			fmt.Printf("Set %v as lo peer, prev: %v\n", addr, ctx.LinkedPeers[0])
 			ctx.LinkedPeers[0] = addr
 		}
 		if len(ctx.LinkedPeers[1]) == 0 ||
 			ctx.LinkedPeers[1] > addr && addr > ctx.ServerAddr ||
 			ctx.ServerAddr > ctx.LinkedPeers[1] &&
 				(ctx.LinkedPeers[1] > addr || addr > ctx.ServerAddr) {
-			fmt.Printf("Set %v as hi peer, prev: %v\n", addr, ctx.LinkedPeers[1])
 			ctx.LinkedPeers[1] = addr
 		}
 	}
@@ -67,4 +68,14 @@ func (ctx *Context) ResolvePeerName(addr PeerAddr) string {
 		return info.Name + res
 	}
 	return string(addr) + res
+}
+
+func (ctx *Context) CASState(current, new State) bool {
+	ctx.StateSync.Lock()
+	defer ctx.StateSync.Unlock()
+	if ctx.State == current {
+		ctx.State = new
+		return true
+	}
+	return false
 }

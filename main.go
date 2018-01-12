@@ -32,9 +32,9 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	ctx := common.NewContext(common.PickRandomName(), 3, time.Second, time.Second*5)
+	ctx.State = &state.DiscoveryState{Ctx: ctx}
+	server := dv_net.NewTcpServer(ctx)
 
-	server := dv_net.NewTcpServer(&state.DiscoveryState{Ctx: ctx}, ctx)
-	ctx.Server = server
 	server.Listen()
 	ifAddr, err := common.GetInterfaceIPv4Addr(iface)
 	if err != nil {
@@ -54,8 +54,7 @@ func main() {
 	discoveryServer.StartOn(iface)
 	discoveryServer.SendDiscoveryRequestOn(iface)
 
-	aHandler := console.DefaultActionHandler{Ctx: ctx}
 	stop := make(chan struct{}, 2)
-	console.ListenConsole(&aHandler, &stop)
+	console.ListenConsole(ctx, &stop)
 	time.Sleep(time.Hour)
 }

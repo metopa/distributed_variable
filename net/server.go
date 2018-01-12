@@ -14,15 +14,14 @@ import (
 var localSessionIdCounter uint64
 
 type TcpServer struct {
-	listener   *net.TCPListener
-	stop       bool
-	cmdHandler common.CommandHandler
-	ctx        *common.Context
-	sync       sync.Mutex
+	listener *net.TCPListener
+	stop     bool
+	ctx      *common.Context
+	sync     sync.Mutex
 }
 
-func NewTcpServer(handler common.CommandHandler, context *common.Context) *TcpServer {
-	return &TcpServer{ctx: context, cmdHandler: handler}
+func NewTcpServer(context *common.Context) *TcpServer {
+	return &TcpServer{ctx: context}
 }
 
 func (s *TcpServer) Listen() {
@@ -52,24 +51,6 @@ func (s *TcpServer) Port() int {
 		logger.Fatal("%v", err)
 	}
 	return addr.Port
-}
-
-func (s *TcpServer) SetCommandHandler(handler common.CommandHandler) {
-	s.cmdHandler = handler
-}
-
-func (s *TcpServer) CasCommandHandler(current, new common.CommandHandler) bool {
-	s.sync.Lock()
-	defer s.sync.Unlock()
-	if s.cmdHandler == current {
-		s.cmdHandler = new
-		return true
-	}
-	return false
-}
-
-func (s *TcpServer) GetCommandHandler() common.CommandHandler {
-	return s.cmdHandler
 }
 
 func (s *TcpServer) accept() {
@@ -106,7 +87,7 @@ func (s *TcpServer) handleConnection(conn *net.TCPConn) {
 				return
 			} else {
 				go SendToHi(s.ctx, cmd)
-				common.DispatchCommand(s.cmdHandler, senderAddr, cmd)
+				common.DispatchCommand(s.ctx.State, senderAddr, cmd)
 				return
 			}
 		} else {
@@ -119,7 +100,7 @@ func (s *TcpServer) handleConnection(conn *net.TCPConn) {
 			return
 		}
 	} else {
-		common.DispatchCommand(s.cmdHandler, senderAddr, cmd)
+		common.DispatchCommand(s.ctx.State, senderAddr, cmd)
 		return
 	}
 }

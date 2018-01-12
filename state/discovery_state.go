@@ -25,7 +25,7 @@ func (h *DiscoveryState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
 func (h *DiscoveryState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr) {
 	h.Ctx.Leader = leader
 	ls := &LinkedState{*h}
-	if h.Ctx.Server.CasCommandHandler(h, ls) {
+	if h.Ctx.CASState(h, ls) {
 		logger.Info("%v is ring leader", leader)
 		ls.Start()
 	}
@@ -43,11 +43,26 @@ func (h *DiscoveryState) ChRoIdReceived(sender common.PeerAddr, id int) {
 	if id > h.Ctx.PeerId {
 		net.SendToHi(h.Ctx, common.NewChangRobertIdCmd(id))
 	} else if id == h.Ctx.PeerId {
-		ls := &LeaderState{DiscoveryState:*h}
-		if h.Ctx.Server.CasCommandHandler(h, ls) {
+		ls := &LeaderState{DiscoveryState: *h}
+		if h.Ctx.CASState(h, ls) {
 			logger.Info("This peer is ring leader")
 			h.Ctx.Leader = h.Ctx.ServerAddr
 			ls.Start()
 		}
 	}
+}
+
+func (h *DiscoveryState) ActionStartChRo() {
+	//TODO Lock peer list
+	//TODO Check there's any peers
+	if h.Ctx.StartedChRoTimer == 1 {
+		logger.Info("ChRo has already been started")
+	}
+	cmd := common.NewSyncPeersCmd(h.Ctx)
+	h.Ctx.Sync.Lock()
+	for addr := range h.Ctx.KnownPeers {
+		net.SendToDirectly(h.Ctx, addr, cmd)
+	}
+	h.Ctx.Sync.Unlock()
+	net.StartChRoTimer(h.Ctx)
 }

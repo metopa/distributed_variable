@@ -11,54 +11,72 @@ type NullState struct{}
 
 func (h *NullState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
 	name string, shouldReply bool) {
-	notImplementedWarning()
+	NotHandled()
 }
 
 func (h *NullState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr) {
-	notImplementedWarning()
+	NotHandled()
 }
 func (h *NullState) LinkedPeersChanged(sender common.PeerAddr,
 	loPeer common.PeerAddr, hiPeer common.PeerAddr) {
-	notImplementedWarning()
+	NotHandled()
 }
 func (h *NullState) PeerReported(sender common.PeerAddr, reportedPeer common.PeerAddr) {
-	notImplementedWarning()
+	NotHandled()
 }
 func (h *NullState) DistanceRequested(sender common.PeerAddr, source common.PeerAddr) {
-	notImplementedWarning()
+	NotHandled()
 }
 func (h *NullState) DistanceReceived(sender common.PeerAddr, distance int) {
-	notImplementedWarning()
+	NotHandled()
 }
 func (h *NullState) SyncPeers(sender common.PeerAddr, values []string) {
-	notImplementedWarning()
+	NotHandled()
 }
 
 func (h *NullState) ChRoIdReceived(sender common.PeerAddr, id int) {
-	notImplementedWarning()
+	NotHandled()
 }
 
 func (h *NullState) RingJoinRequested(sender common.PeerAddr, source common.PeerAddr) {
-	notImplementedWarning()
+	NotHandled()
 }
 func (h *NullState) RingLeaveAnnounced(sender common.PeerAddr, source common.PeerAddr) {
-	notImplementedWarning()
+	NotHandled()
 }
 func (h *NullState) ValueGetRequested(sender common.PeerAddr, source common.PeerAddr) {
-	notImplementedWarning()
+	NotHandled()
 }
 func (h *NullState) GotValue(sender common.PeerAddr, value int) {
-	notImplementedWarning()
+	NotHandled()
 }
 func (h *NullState) ValueSetRequested(sender common.PeerAddr,
 	source common.PeerAddr, value int) {
-	notImplementedWarning()
+	NotHandled()
 }
 func (h *NullState) ValueSetConfirmed(sender common.PeerAddr) {
-	notImplementedWarning()
+	NotHandled()
+}
+func (h *NullState) ActionSetValue(value int) {
+	NotHandled()
+}
+func (h *NullState) ActionGetValue() {
+	NotHandled()
+}
+func (h *NullState) ActionStartChRo() {
+	NotHandled()
+}
+func (h *NullState) ActionLeave() {
+	NotHandled()
+}
+func (h *NullState) ActionDisconnect() {
+	NotHandled()
+}
+func (h *NullState) ActionReconnect() {
+	NotHandled()
 }
 
-func notImplementedWarning() {
+func NotHandled() {
 	pc := make([]uintptr, 10) // at least 1 entry needed
 	runtime.Callers(2, pc)
 	eventF := runtime.FuncForPC(pc[0])

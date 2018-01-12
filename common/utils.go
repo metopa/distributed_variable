@@ -8,6 +8,12 @@ import (
 
 type PeerAddr string
 
+type PeerInfo struct {
+	Addr PeerAddr
+	Name string
+}
+
+
 func IsTimeoutError(err error) bool {
 	nerr, ok := err.(net.Error)
 	return ok && nerr.Timeout()

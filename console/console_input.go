@@ -9,13 +9,13 @@ import (
 	"github.com/metopa/distributed_variable/logger"
 )
 
-func ListenConsole(handler common.ActionHandler, stop *chan struct{}) {
+func ListenConsole(ctx *common.Context, stop *chan struct{}) {
 	ch := make(chan string)
 	go func(ch chan string) {
 		reader := bufio.NewReader(os.Stdin)
 		for {
 			s, err := reader.ReadString('\n')
-			if err != nil { // Maybe log non io.EOF errors, if you want
+			if err != nil {
 				close(ch)
 				return
 			}
@@ -30,7 +30,7 @@ func ListenConsole(handler common.ActionHandler, stop *chan struct{}) {
 			if !ok {
 				return
 			} else {
-				handleAction(str, handler)
+				handleAction(str, ctx.State)
 			}
 		case <-*stop:
 			return
@@ -38,8 +38,8 @@ func ListenConsole(handler common.ActionHandler, stop *chan struct{}) {
 	}
 }
 func handleAction(action string, handler common.ActionHandler) {
-	if action == "start_ch_ro" {
-		handler.StartChRo()
+	if action == "start ch ro" {
+		handler.ActionStartChRo()
 	} else {
 		logger.Warn("Unknown command: %v", action)
 	}
