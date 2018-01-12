@@ -15,6 +15,7 @@ func (h *DiscoveryState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
 	name string, shouldReply bool) {
 	h.Ctx.AddNewPeer(name, addr)
 	logger.Info("Added new peer: %v(%v)", name, addr)
+	logger.Info("Linked peers: %v", h.Ctx.LinkedPeers)
 	if shouldReply {
 		net.SendToDirectly(h.Ctx, addr,
 			common.NewPeerInfoResponseCommand(h.Ctx.Name, h.Ctx.Leader))
