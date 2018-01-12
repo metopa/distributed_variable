@@ -6,13 +6,15 @@ import (
 	"net"
 	"time"
 
-	dv_common "github.com/metopa/distributed_variable/common"
+	"github.com/metopa/distributed_variable/common"
+	"github.com/metopa/distributed_variable/console"
 	"github.com/metopa/distributed_variable/logger"
 	dv_net "github.com/metopa/distributed_variable/net"
+	"github.com/metopa/distributed_variable/state"
 )
 
 func main() {
-	ifaceNames := dv_common.GetInterfaceNames()
+	ifaceNames := common.GetInterfaceNames()
 
 	ifaceName := flag.String("if", "",
 		"Network interface name. Available: "+ifaceNames)
@@ -29,25 +31,31 @@ func main() {
 	}
 	rand.Seed(time.Now().UnixNano())
 
-	ctx := dv_common.NewContext(dv_common.PickRandomName(), 3, time.Second)
+	ctx := common.NewContext(common.PickRandomName(), 3, time.Second, time.Second*5)
 
-	server := dv_net.NewTcpServer(&dv_net.InitialCommandHandler{Ctx: ctx}, ctx)
+	server := dv_net.NewTcpServer(&state.DiscoveryState{Ctx: ctx}, ctx)
+	ctx.Server = server
 	server.Listen()
-	ifAddr, err := dv_common.GetInterfaceIPv4Addr(iface)
+	ifAddr, err := common.GetInterfaceIPv4Addr(iface)
 	if err != nil {
 		logger.Fatal("%v", err)
 	}
-	ctx.ServerAddr = dv_common.PeerAddr((&net.TCPAddr{IP: ifAddr, Port: server.Port()}).String())
+	ctx.ServerAddr = common.PeerAddr((&net.TCPAddr{IP: ifAddr, Port: server.Port()}).String())
 	logger.Info("Peer name:    %s", ctx.Name)
+	logger.Info("Peer id:      %d", ctx.PeerId)
 	logger.Info("Peer address: %s", string(ctx.ServerAddr))
 
 	discoveryServer := dv_net.NewDiscoveryServer(string(ctx.ServerAddr),
 		func(response string) {
 			logger.Info("New discovery response from %v", response)
-			dv_net.SendToDirectly(ctx, dv_common.PeerAddr(response),
-				dv_net.NewPeerInfoRequestCommand(ctx.Name))
+			dv_net.SendToDirectly(ctx, common.PeerAddr(response),
+				common.NewPeerInfoRequestCommand(ctx.Name))
 		})
 	discoveryServer.StartOn(iface)
 	discoveryServer.SendDiscoveryRequestOn(iface)
+
+	aHandler := console.DefaultActionHandler{Ctx: ctx}
+	stop := make(chan struct{}, 2)
+	console.ListenConsole(&aHandler, &stop)
 	time.Sleep(time.Hour)
 }

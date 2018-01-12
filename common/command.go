@@ -1,9 +1,7 @@
-package net
+package common
 
 import (
 	"fmt"
-
-	"github.com/metopa/distributed_variable/common"
 )
 
 const (
@@ -14,6 +12,8 @@ const (
 	REPORT_PEER_CMD
 	LEADER_DISTANCE_REQUEST_CMD
 	LEADER_DISTANCE_RESPONSE_CMD
+	SYNC_PEERS_CMD
+	CHANG_ROBERTS_ID_CMD
 	JOIN_RING_CMD
 	LEAVE_RING_CMD
 	GET_REQUEST_CMD
@@ -31,6 +31,8 @@ var cmdNames = []string{
 	"REPORT_PEER_CMD",
 	"LEADER_DISTANCE_REQUEST_CMD",
 	"LEADER_DISTANCE_RESPONSE_CMD",
+	"SYNC_PEERS_CMD",
+	"CHANG_ROBERTS_ID_CMD",
 	"JOIN_RING_CMD",
 	"LEAVE_RING_CMD",
 	"GET_REQUEST_CMD",
@@ -39,13 +41,12 @@ var cmdNames = []string{
 	"SET_RESPONSE_CMD",
 }
 
-
 type TcpCommand struct {
 	Op          int
 	Sarg        []string
 	Iarg        []int
-	Source      common.PeerAddr
-	Destination common.PeerAddr
+	Source      PeerAddr
+	Destination PeerAddr
 	Ttl         int
 }
 
@@ -53,19 +54,19 @@ func NewPeerInfoRequestCommand(name string) TcpCommand {
 	return TcpCommand{Op: PEER_INFO_REQUEST_CMD, Sarg: []string{name}}
 }
 
-func NewPeerInfoResponseCommand(name string, leader common.PeerAddr) TcpCommand {
+func NewPeerInfoResponseCommand(name string, leader PeerAddr) TcpCommand {
 	return TcpCommand{Op: PEER_INFO_RESPONSE_CMD, Sarg: []string{name, string(leader)}}
 }
 
-func NewSetLeaderCommand(leader string) TcpCommand {
-	return TcpCommand{Op: SET_LEADER_CMD, Sarg: []string{leader}}
+func NewSetLeaderCommand(leader PeerAddr) TcpCommand {
+	return TcpCommand{Op: SET_LEADER_CMD, Sarg: []string{string(leader)}}
 }
 
-func NewSetLinkedPeersCommand(loPeer common.PeerAddr, hiPeer common.PeerAddr) TcpCommand {
+func NewSetLinkedPeersCommand(loPeer PeerAddr, hiPeer PeerAddr) TcpCommand {
 	return TcpCommand{Op: SET_LINKED_PEERS_CMD, Sarg: []string{string(loPeer), string(hiPeer)}}
 }
 
-func NewReportPeerCommand(peer common.PeerAddr) TcpCommand {
+func NewReportPeerCommand(peer PeerAddr) TcpCommand {
 	return TcpCommand{Op: REPORT_PEER_CMD, Sarg: []string{string(peer)}}
 }
 
@@ -75,6 +76,20 @@ func NewLeaderDistanceRequestCommand() TcpCommand {
 
 func NewLeaderDistanceResponseCommand(distance int) TcpCommand {
 	return TcpCommand{Op: LEADER_DISTANCE_RESPONSE_CMD, Iarg: []int{distance}}
+}
+
+func NewSyncPeersCmd(ctx *Context) TcpCommand {
+	cmd := TcpCommand{Op: SYNC_PEERS_CMD}
+	ctx.Sync.Lock()
+	for _, v := range ctx.KnownPeers {
+		cmd.Sarg = append(cmd.Sarg, string(v.Addr), v.Name)
+	}
+	ctx.Sync.Unlock()
+	return cmd
+}
+
+func NewChangRobertIdCmd(id int) TcpCommand {
+	return TcpCommand{Op: CHANG_ROBERTS_ID_CMD, Iarg: []int{id}}
 }
 
 func NewJoinRingCommand() TcpCommand {
@@ -109,26 +124,30 @@ func (cmd *TcpCommand) String() string {
 	}
 }
 
-func dispatchCommand(handler CommandHandler, sender common.PeerAddr, cmd TcpCommand) {
+func DispatchCommand(handler CommandHandler, sender PeerAddr, cmd TcpCommand) {
 	switch cmd.Op {
 	case PEER_INFO_REQUEST_CMD:
 		handler.NewPeer(sender, cmd.Source, cmd.Sarg[0], true)
 	case PEER_INFO_RESPONSE_CMD:
 		handler.NewPeer(sender, cmd.Source, cmd.Sarg[0], false)
 		if cmd.Sarg[1] != "" {
-			handler.LeaderChanged(sender, common.PeerAddr(cmd.Sarg[1]))
+			handler.LeaderChanged(sender, PeerAddr(cmd.Sarg[1]))
 		}
 	case SET_LEADER_CMD:
-		handler.LeaderChanged(sender, common.PeerAddr(cmd.Sarg[0]))
+		handler.LeaderChanged(sender, PeerAddr(cmd.Sarg[0]))
 	case SET_LINKED_PEERS_CMD:
 		handler.LinkedPeersChanged(sender,
-			common.PeerAddr(cmd.Sarg[0]), common.PeerAddr(cmd.Sarg[1]))
+			PeerAddr(cmd.Sarg[0]), PeerAddr(cmd.Sarg[1]))
 	case REPORT_PEER_CMD:
-		handler.PeerReported(sender, common.PeerAddr(cmd.Sarg[0]))
+		handler.PeerReported(sender, PeerAddr(cmd.Sarg[0]))
 	case LEADER_DISTANCE_REQUEST_CMD:
 		handler.DistanceRequested(sender, cmd.Source)
 	case LEADER_DISTANCE_RESPONSE_CMD:
 		handler.DistanceReceived(sender, cmd.Iarg[0])
+	case SYNC_PEERS_CMD:
+		handler.SyncPeers(sender, cmd.Sarg)
+	case CHANG_ROBERTS_ID_CMD:
+		handler.ChRoIdReceived(sender, cmd.Iarg[0])
 	case JOIN_RING_CMD:
 		handler.RingJoinRequested(sender, cmd.Source)
 	case LEAVE_RING_CMD:

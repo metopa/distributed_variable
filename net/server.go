@@ -3,6 +3,7 @@ package net
 import (
 	"encoding/json"
 	"net"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -13,14 +14,15 @@ import (
 var localSessionIdCounter uint64
 
 type TcpServer struct {
-	listener     *net.TCPListener
-	stop         bool
-	eventHandler CommandHandler
-	ctx          *common.Context
+	listener   *net.TCPListener
+	stop       bool
+	cmdHandler common.CommandHandler
+	ctx        *common.Context
+	sync       sync.Mutex
 }
 
-func NewTcpServer(handler CommandHandler, context *common.Context) *TcpServer {
-	return &TcpServer{ctx: context, eventHandler: handler}
+func NewTcpServer(handler common.CommandHandler, context *common.Context) *TcpServer {
+	return &TcpServer{ctx: context, cmdHandler: handler}
 }
 
 func (s *TcpServer) Listen() {
@@ -52,8 +54,22 @@ func (s *TcpServer) Port() int {
 	return addr.Port
 }
 
-func (s *TcpServer) SetEventHandler(handler CommandHandler) {
-	s.eventHandler = handler
+func (s *TcpServer) SetCommandHandler(handler common.CommandHandler) {
+	s.cmdHandler = handler
+}
+
+func (s *TcpServer) CasCommandHandler(current, new common.CommandHandler) bool {
+	s.sync.Lock()
+	defer s.sync.Unlock()
+	if s.cmdHandler == current {
+		s.cmdHandler = new
+		return true
+	}
+	return false
+}
+
+func (s *TcpServer) GetCommandHandler() common.CommandHandler {
+	return s.cmdHandler
 }
 
 func (s *TcpServer) accept() {
@@ -73,36 +89,45 @@ func (s *TcpServer) accept() {
 }
 
 func (s *TcpServer) handleConnection(conn *net.TCPConn) {
-	//TODO Resolve alias
 	sessionId := atomic.AddUint64(&localSessionIdCounter, 1)
 	cmd, err := decodeCommand(conn)
+	senderAddr := common.PeerAddr(conn.RemoteAddr().String())
+	sender := s.ctx.ResolvePeerName(senderAddr)
 	conn.Close()
 	if err != nil {
-		logger.Warn("Session #%v(%v): Error: %v", sessionId, conn.RemoteAddr(), err)
+		logger.Warn("Session #%v(%v): Error: %v", sessionId, sender, err)
 		return
 	}
-	logger.Info("Session #%v(%v): Received %v", sessionId, conn.RemoteAddr(), cmd)
-
-
+	logger.Info("Session #%v(%v): Received %v", sessionId, sender, cmd)
 
 	if cmd.Destination != s.ctx.ServerAddr {
-		cmd.Ttl--
-		if cmd.Ttl <= 0 {
-			logger.Warn("Session #%v(%v): TTL expired", sessionId, conn.RemoteAddr())
+		if cmd.Destination == "BROADCAST" {
+			if cmd.Source == s.ctx.ServerAddr {
+				return
+			} else {
+				go SendToHi(s.ctx, cmd)
+				common.DispatchCommand(s.cmdHandler, senderAddr, cmd)
+				return
+			}
+		} else {
+			cmd.Ttl--
+			if cmd.Ttl > 0 {
+				TransmitInRing(s.ctx, senderAddr, cmd)
+			} else {
+				logger.Warn("Session #%v(%v): TTL expired", sessionId, sender)
+			}
 			return
 		}
-		//t.Forward(cmd)
-		//TODO
+	} else {
+		common.DispatchCommand(s.cmdHandler, senderAddr, cmd)
 		return
 	}
-
-	dispatchCommand(s.eventHandler, common.PeerAddr(conn.RemoteAddr().String()), cmd)
 }
 
-func decodeCommand(conn *net.TCPConn) (TcpCommand, error) {
+func decodeCommand(conn *net.TCPConn) (common.TcpCommand, error) {
 	conn.SetDeadline(time.Now().Add(time.Second * 15))
 	d := json.NewDecoder(conn)
-	var cmd TcpCommand
+	var cmd common.TcpCommand
 	err := d.Decode(&cmd)
 	return cmd, err
 }
