@@ -116,7 +116,8 @@ func NewSetResponseCommand() TcpCommand {
 	return TcpCommand{Op: SET_RESPONSE_CMD}
 }
 
-func (cmd *TcpCommand) String() string {
+
+func (cmd TcpCommand) String() string {
 	if cmd.Op >= 0 && cmd.Op < MAX_CMD {
 		return fmt.Sprintf("{%s to %s}", cmdNames[cmd.Op], cmd.Destination)
 	} else {

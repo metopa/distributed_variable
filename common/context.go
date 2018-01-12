@@ -38,13 +38,16 @@ func (ctx *Context) AddNewPeer(name string, addr PeerAddr) {
 	defer ctx.Sync.Unlock()
 	if _, ok := ctx.KnownPeers[addr]; !ok {
 		ctx.KnownPeers[addr] = PeerInfo{Addr: addr, Name: name}
+
 		if len(ctx.LinkedPeers[0]) == 0 ||
-			addr < ctx.ServerAddr && (addr > ctx.LinkedPeers[0] || ctx.LinkedPeers[0] > ctx.ServerAddr) {
+			ctx.LinkedPeers[0] < addr &&
+				(addr < ctx.ServerAddr || ctx.ServerAddr < ctx.LinkedPeers[0]) {
 			fmt.Printf("Set %v as lo peer, prev: %v\n", addr, ctx.LinkedPeers[0])
 			ctx.LinkedPeers[0] = addr
 		}
 		if len(ctx.LinkedPeers[1]) == 0 ||
-			addr > ctx.ServerAddr && (addr < ctx.LinkedPeers[1] || ctx.LinkedPeers[1] < ctx.ServerAddr) {
+			ctx.LinkedPeers[1] > addr &&
+				(addr > ctx.ServerAddr || ctx.ServerAddr > ctx.LinkedPeers[1]) {
 			fmt.Printf("Set %v as hi peer, prev: %v\n", addr, ctx.LinkedPeers[1])
 			ctx.LinkedPeers[1] = addr
 		}
