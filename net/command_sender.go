@@ -50,7 +50,7 @@ func SendToDirectly(ctx *common.Context, destination common.PeerAddr, cmd common
 }
 
 func SendToRingLeader(ctx *common.Context, cmd common.TcpCommand) {
-	cmd.Destination = ctx.ServerAddr
+	cmd.Destination = ctx.Leader
 	//TODO Choose direction basing on leader distance
 	SendToHi(ctx, cmd)
 }
