@@ -50,7 +50,7 @@ func handleAction(action string, handler common.ActionHandler) {
 	} else if action == "get" {
 		go handler.ActionGetValue()
 	} else {
-		m := setValueRegex.Find([]byte(action))
+		m := setValueRegex.FindStringSubmatch(action)
 
 		if m != nil {
 			n, err := strconv.Atoi(string(m[1]))
