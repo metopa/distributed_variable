@@ -2,6 +2,7 @@ package state
 
 import (
 	"runtime"
+	"strings"
 
 	"github.com/metopa/distributed_variable/common"
 	"github.com/metopa/distributed_variable/logger"
@@ -75,6 +76,9 @@ func (h *NullState) ActionDisconnect() {
 func (h *NullState) ActionReconnect() {
 	NotHandled()
 }
+func (h *NullState) Name() string {
+	return "Null state"
+}
 
 func NotHandled() {
 	pc := make([]uintptr, 10) // at least 1 entry needed
@@ -84,6 +88,8 @@ func NotHandled() {
 	runtime.Callers(3, pc)
 	callerF := runtime.FuncForPC(pc[0])
 	file, line := callerF.FileLine(pc[0])
+	eventFName := strings.Split(eventF.Name(), ".")
 
-	logger.Warn("%v event can't be handled in current state. Called from %s:%d", eventF.Name(), file, line)
+	logger.Warn("%v event can't be handled in current state. Called from %s:%d",
+		eventFName[len(eventFName)-1], file, line)
 }

@@ -54,9 +54,13 @@ func (h *DiscoveryState) ChRoIdReceived(sender common.PeerAddr, id int) {
 
 func (h *DiscoveryState) ActionStartChRo() {
 	//TODO Lock peer list
-	//TODO Check there's any peers
+	if len(h.Ctx.KnownPeers) == 0 {
+		logger.Warn("No other peers connected, can't build peer ring")
+		return
+	}
 	if h.Ctx.StartedChRoTimer == 1 {
 		logger.Info("ChRo has already been started")
+		return
 	}
 	cmd := common.NewSyncPeersCmd(h.Ctx)
 	h.Ctx.Sync.Lock()
@@ -65,4 +69,8 @@ func (h *DiscoveryState) ActionStartChRo() {
 	}
 	h.Ctx.Sync.Unlock()
 	net.StartChRoTimer(h.Ctx)
+}
+
+func (h *DiscoveryState) Name() string {
+	return "Discovery state"
 }

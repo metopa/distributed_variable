@@ -93,7 +93,7 @@ func (s *TcpServer) handleConnection(conn *net.TCPConn) {
 		} else {
 			cmd.Ttl--
 			if cmd.Ttl > 0 {
-				TransmitInRing(s.ctx, senderAddr, cmd)
+				ForwardInRing(s.ctx, senderAddr, cmd)
 			} else {
 				logger.Warn("Session #%v(%v): TTL expired", sessionId, sender)
 			}

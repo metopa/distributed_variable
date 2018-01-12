@@ -2,12 +2,16 @@ package console
 
 import (
 	"bufio"
+	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/metopa/distributed_variable/common"
 	"github.com/metopa/distributed_variable/logger"
 )
+
+var setValueRegex = regexp.MustCompile("set\\s+([0-9]+)")
 
 func ListenConsole(ctx *common.Context, stop *chan struct{}) {
 	ch := make(chan string)
@@ -38,9 +42,25 @@ func ListenConsole(ctx *common.Context, stop *chan struct{}) {
 	}
 }
 func handleAction(action string, handler common.ActionHandler) {
-	if action == "start ch ro" {
-		handler.ActionStartChRo()
+	if action == "?" {
+		fmt.Print("Available commands:\n\tstart\n\tget\n\tset %d\n\tleave\n\force-leave\n\treconnect\n")
+	} else if action == "start" {
+		go handler.ActionStartChRo()
+	} else if action == "get" {
+		go handler.ActionGetValue()
 	} else {
-		logger.Warn("Unknown command: %v", action)
+		m := setValueRegex.Find([]byte(action))
+
+		if m != nil {
+			go handler.ActionSetValue(int(m[1]))
+		} else if action == "leave" {
+			go handler.ActionLeave()
+		} else if action == "force-leave" {
+			go handler.ActionDisconnect()
+		} else if action == "reconnect" {
+			go handler.ActionReconnect()
+		} else {
+			logger.Warn("Unknown command: %v", action)
+		}
 	}
 }

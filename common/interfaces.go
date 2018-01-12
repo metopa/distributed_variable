@@ -29,4 +29,5 @@ type CommandHandler interface {
 type State interface {
 	CommandHandler
 	ActionHandler
+	Name() string
 }

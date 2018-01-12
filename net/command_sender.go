@@ -74,13 +74,24 @@ func SendToLo(ctx *common.Context, cmd common.TcpCommand) {
 	}
 }
 
-func TransmitInRing(ctx *common.Context, from common.PeerAddr, cmd common.TcpCommand) {
+func ForwardInRing(ctx *common.Context, from common.PeerAddr, cmd common.TcpCommand) {
 	if from == ctx.LinkedPeers[0] {
 		SendToHi(ctx, cmd)
 	} else if from == ctx.LinkedPeers[1] {
 		SendToLo(ctx, cmd)
 	} else {
-		logger.Warn("Tried to transmit %v from %v, but linked peers are %v", cmd, from, ctx.LinkedPeers)
+		logger.Warn("Tried to forward %v from %v, but linked peers are %v", cmd, from, ctx.LinkedPeers)
+		SendToHi(ctx, cmd)
+	}
+}
+
+func ReplyInRing(ctx *common.Context, from common.PeerAddr, cmd common.TcpCommand) {
+	if from == ctx.LinkedPeers[0] {
+		SendToLo(ctx, cmd)
+	} else if from == ctx.LinkedPeers[1] {
+		SendToHi(ctx, cmd)
+	} else {
+		logger.Warn("Tried to reply %v to %v, but linked peers are %v", cmd, from, ctx.LinkedPeers)
 		SendToHi(ctx, cmd)
 	}
 }
