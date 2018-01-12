@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/metopa/distributed_variable/common"
@@ -52,7 +53,12 @@ func handleAction(action string, handler common.ActionHandler) {
 		m := setValueRegex.Find([]byte(action))
 
 		if m != nil {
-			go handler.ActionSetValue(int(m[1]))
+			n, err := strconv.Atoi(string(m[1]))
+			if err != nil {
+				fmt.Printf("Failed to parse number: %v", err)
+			} else {
+				go handler.ActionSetValue(n)
+			}
 		} else if action == "leave" {
 			go handler.ActionLeave()
 		} else if action == "force-leave" {
