@@ -96,13 +96,13 @@ func (ctx *Context) UpdateLinkedPeers() {
 		if len(min) == 0 || k < min {
 			min = k
 		}
-		if len(min) == 0 || k > min {
-			min = k
+		if len(max) == 0 || k > max {
+			max = k
 		}
 		if k < ctx.ServerAddr && (len(lo) == 0 || lo < k) {
 			lo = k
 		}
-		if k > ctx.ServerAddr && (len(hi) == 0 || k < hi) {
+		if ctx.ServerAddr < k && (len(hi) == 0 || k < hi) {
 			hi = k
 		}
 	}
