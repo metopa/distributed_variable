@@ -73,3 +73,13 @@ func (s *LinkedState) RequestDistancesIfMissing() {
 		go net.SendToRingLeader(s.Ctx, common.NewLeaderDistanceRequestCommand())
 	}
 }
+func (s *LinkedState) ActionReportPeer(addr common.PeerAddr) {
+	logger.Warn("Reporting peer %v", addr)
+	cmd := common.NewReportPeerCommand(addr)
+	cmd.Destination = s.Ctx.Leader
+	if addr == s.Ctx.LinkedPeers[0] {
+		net.SendToHi(s.Ctx, cmd)
+	} else {
+		net.SendToLo(s.Ctx, cmd)
+	}
+}

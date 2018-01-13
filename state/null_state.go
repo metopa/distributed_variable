@@ -80,6 +80,9 @@ func (s *NullState) ActionDisconnect() {
 func (s *NullState) ActionReconnect() {
 	NotHandled()
 }
+func (s *NullState)ActionReportPeer(addr common.PeerAddr) {
+	NotHandled()
+}
 func (s *NullState) Name() string {
 	return "Null state"
 }

@@ -34,7 +34,7 @@ func SendToReliable(ctx *common.Context, mainDest common.PeerAddr, altDest commo
 	}
 
 	logger.Warn("Send %v(%v): Trying alt link; Error: %v", cmd, infoStr, err)
-
+	go ctx.GetState().ActionReportPeer(mainDest)
 	if altDest == mainDest || cmd.Destination == mainDest || len(altDest) == 0 {
 		reason := "altDest == mainDest"
 		if cmd.Destination == mainDest {

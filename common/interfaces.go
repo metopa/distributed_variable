@@ -7,6 +7,7 @@ type ActionHandler interface {
 	ActionLeave()
 	ActionDisconnect()
 	ActionReconnect()
+	ActionReportPeer(addr PeerAddr)
 }
 
 type CommandHandler interface {

@@ -59,7 +59,7 @@ func (s *LeaderState) LeaderChanged(sender common.PeerAddr, leader common.PeerAd
 	}
 }
 
-func (s *LeaderState)PeerReported(sender common.PeerAddr, reportedPeer common.PeerAddr) {
+func (s *LeaderState)PeerReported(reportedPeer common.PeerAddr) {
 	logger.Warn("Peer reported: %v", reportedPeer)
 }
 
@@ -89,4 +89,7 @@ func (s *LeaderState) ActionSetValue(value int) {
 
 func (s *LeaderState) ActionGetValue() {
 	fmt.Printf("Value = %v\n", s.Value)
+}
+func (s *LeaderState) ActionReportPeer(addr common.PeerAddr) {
+	s.PeerReported(addr)
 }
