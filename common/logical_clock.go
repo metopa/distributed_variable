@@ -6,22 +6,22 @@ import (
 )
 
 type LamportClock struct {
-	value uint64
+	Value uint64
 }
 
 func (l LamportClock) String() string {
-	return fmt.Sprintf("[%4d]", uint64(l.value))
+	return fmt.Sprintf("[%4d]", uint64(l.Value))
 }
 
 func (l *LamportClock) SyncAfter(remoteClock LamportClock, delta uint64) {
-	remote := remoteClock.value + delta
+	remote := remoteClock.Value + delta
 	for {
-		old := l.value
+		old := l.Value
 		local := old + delta
 		if remote > local {
 			local = remote
 		}
-		if atomic.CompareAndSwapUint64(&(l.value), old, local) {
+		if atomic.CompareAndSwapUint64(&(l.Value), old, local) {
 			break
 		}
 	}
