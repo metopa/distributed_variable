@@ -35,7 +35,7 @@ func ListenConsole(ctx *common.Context, stop *chan struct{}) {
 			if !ok {
 				return
 			} else {
-				handleAction(str, ctx.State)
+				handleAction(str, ctx.GetState())
 			}
 		case <-*stop:
 			return

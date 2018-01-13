@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/metopa/distributed_variable/common"
+	"github.com/metopa/distributed_variable/logger"
 	"github.com/metopa/distributed_variable/net"
 )
 
@@ -12,8 +13,9 @@ type LeaderState struct {
 	Value int
 }
 
-func (s *LeaderState) Start() {
-	net.BroadcastInRing(s.Ctx, common.NewSetLeaderCommand(s.Ctx.Leader))
+func (s *LeaderState) Init() {
+	logger.Info("Current state: LEADER")
+	go net.BroadcastInRing(s.Ctx, common.NewSetLeaderCommand(s.Ctx.Leader))
 }
 
 func (s *LeaderState) ValueGetRequested(sender common.PeerAddr, source common.PeerAddr) {

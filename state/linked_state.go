@@ -4,14 +4,15 @@ import (
 	"fmt"
 
 	"github.com/metopa/distributed_variable/common"
+	"github.com/metopa/distributed_variable/logger"
 	"github.com/metopa/distributed_variable/net"
 )
 
 type LinkedState struct {
 	DiscoveryState
 }
-func (s *LinkedState) Start() {
-
+func (s *LinkedState) Init() {
+	logger.Info("Current state: LINKED")
 }
 func (s *LinkedState) GotValue(sender common.PeerAddr, value int) {
 	fmt.Printf("Value = %v\n", value)

@@ -30,4 +30,5 @@ type State interface {
 	CommandHandler
 	ActionHandler
 	Name() string
+	Init()
 }

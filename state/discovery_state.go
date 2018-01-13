@@ -11,6 +11,10 @@ type DiscoveryState struct {
 	Ctx *common.Context
 }
 
+func (s *DiscoveryState) Init() {
+	logger.Info("Current state: DISCOVERY")
+}
+
 func (h *DiscoveryState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
 	name string, shouldReply bool) {
 	h.Ctx.AddNewPeer(name, addr)
@@ -27,7 +31,6 @@ func (h *DiscoveryState) LeaderChanged(sender common.PeerAddr, leader common.Pee
 	ls := &LinkedState{*h}
 	if h.Ctx.CASState(h, ls) {
 		logger.Info("%v is ring leader", leader)
-		ls.Start()
 	}
 }
 
@@ -47,7 +50,6 @@ func (h *DiscoveryState) ChRoIdReceived(sender common.PeerAddr, id int) {
 		if h.Ctx.CASState(h, ls) {
 			logger.Info("This peer is ring leader")
 			h.Ctx.Leader = h.Ctx.ServerAddr
-			ls.Start()
 		}
 	}
 }

@@ -88,7 +88,7 @@ func (s *TcpServer) handleConnection(conn *net.TCPConn) {
 	}
 	sender := s.ctx.ResolvePeerName(senderAddr)
 
-	logger.Info("Session #%v(%v): Received %v[%v]", sessionId, sender, cmd, cmd.Clock.Value)
+	logger.Info("Session #%v(%v): Received %v[%v]", sessionId, sender, cmd, cmd.Clock.Value  )
 
 	if cmd.Destination != s.ctx.ServerAddr {
 		if cmd.Destination == "BROADCAST" {
@@ -96,7 +96,7 @@ func (s *TcpServer) handleConnection(conn *net.TCPConn) {
 				return
 			} else {
 				go SendToHi(s.ctx, cmd)
-				common.DispatchCommand(s.ctx.State, senderAddr, cmd)
+				common.DispatchCommand(s.ctx.GetState(), senderAddr, cmd)
 				return
 			}
 		} else {
@@ -109,7 +109,7 @@ func (s *TcpServer) handleConnection(conn *net.TCPConn) {
 			return
 		}
 	} else {
-		common.DispatchCommand(s.ctx.State, senderAddr, cmd)
+		common.DispatchCommand(s.ctx.GetState(), senderAddr, cmd)
 		return
 	}
 }

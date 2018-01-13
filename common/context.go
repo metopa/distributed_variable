@@ -17,11 +17,11 @@ type Context struct {
 	SendNumRetries   int
 	SendRetryPause   time.Duration
 	ChRoTimerDur     time.Duration
-	State            State
+	state            State
 	StateSync        sync.Mutex
 	Sync             sync.Mutex
 	StartedChRoTimer int32
-	Clock     		 LamportClock
+	Clock            LamportClock
 }
 
 func NewContext(name string, sendNumRetries int, sendRetryPause, chRoTimerDur time.Duration) *Context {
@@ -74,9 +74,19 @@ func (ctx *Context) ResolvePeerName(addr PeerAddr) string {
 func (ctx *Context) CASState(current, new State) bool {
 	ctx.StateSync.Lock()
 	defer ctx.StateSync.Unlock()
-	if ctx.State == current {
-		ctx.State = new
+	if ctx.state == current {
+		ctx.state = new
+		ctx.state.Init()
 		return true
 	}
 	return false
+}
+
+func (ctx *Context) GetState() State {
+	return ctx.state
+}
+
+func (ctx *Context) SetState(new State) {
+	ctx.state = new
+	ctx.state.Init()
 }

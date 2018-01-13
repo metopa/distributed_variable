@@ -33,7 +33,8 @@ func main() {
 
 	ctx := common.NewContext(common.PickRandomName(), 3, time.Second, time.Second*2)
 	logger.SetContext(ctx)
-	ctx.State = &state.DiscoveryState{Ctx: ctx}
+	ctx.SetState(&state.DiscoveryState{Ctx: ctx})
+
 	server := dv_net.NewTcpServer(ctx)
 
 	server.Listen()

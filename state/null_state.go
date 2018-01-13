@@ -10,6 +10,10 @@ import (
 
 type NullState struct{}
 
+func (s *NullState) Init() {
+	logger.Info("Current state: NULL")
+}
+
 func (h *NullState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
 	name string, shouldReply bool) {
 	NotHandled()
