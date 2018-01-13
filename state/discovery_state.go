@@ -28,7 +28,7 @@ func (h *DiscoveryState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
 	}
 }
 
-func (h *DiscoveryState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr) {
+func (h *DiscoveryState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr, value int) {
 	if leader != h.Ctx.Leader {
 		logger.Info("New leader: %v", leader)
 		h.Ctx.Leader = leader

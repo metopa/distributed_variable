@@ -12,7 +12,7 @@ type ActionHandler interface {
 
 type CommandHandler interface {
 	NewPeer(sender PeerAddr, addr PeerAddr, name string, shouldReply bool)
-	LeaderChanged(sender PeerAddr, leader PeerAddr)
+	LeaderChanged(sender PeerAddr, leader PeerAddr, value int)
 
 	PeerReported(reportedPeer PeerAddr)
 	PeerRemoved(sender PeerAddr, reportedPeer PeerAddr)

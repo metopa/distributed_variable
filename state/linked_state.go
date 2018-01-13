@@ -23,10 +23,13 @@ func (s *LinkedState) ValueSetConfirmed(sender common.PeerAddr) {
 	fmt.Printf("Value is updated\n")
 }
 
-func (s *LinkedState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr) {
+func (s *LinkedState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr, value int) {
 	logger.Info("New leader: %v, prev: %v", leader, s.Ctx.Leader)
 	s.Ctx.Leader = leader
-	//TODO Check we're not the leader
+	if leader == s.Ctx.ServerAddr {
+		ls := &LeaderState{DiscoveryState: DiscoveryState{Ctx: s.Ctx}, Value: value}
+		s.Ctx.CASState(s, ls)
+	}
 }
 
 func (s *LinkedState) DistanceReceived(sender common.PeerAddr, distance int) {

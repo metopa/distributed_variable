@@ -19,7 +19,7 @@ func (s *NullState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
 	NotHandled()
 }
 
-func (s *NullState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr) {
+func (s *NullState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr, value int) {
 	NotHandled()
 }
 func (s *NullState) PeerReported(reportedPeer common.PeerAddr) {

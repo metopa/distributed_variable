@@ -60,8 +60,8 @@ func NewPeerInfoResponseCommand(name string) Command {
 	return Command{Op: PEER_INFO_RESPONSE_CMD, Sarg: []string{name}}
 }
 
-func NewSetLeaderCommand(leader PeerAddr) Command {
-	return Command{Op: SET_LEADER_CMD, Sarg: []string{string(leader)}}
+func NewSetLeaderCommand(leader PeerAddr, value int) Command {
+	return Command{Op: SET_LEADER_CMD, Sarg: []string{string(leader)}, Iarg: []int{value}}
 }
 
 func NewReportPeerCommand(peer PeerAddr) Command {
@@ -131,12 +131,12 @@ func DispatchCommand(handler CommandHandler, sender PeerAddr, cmd Command) {
 	case PEER_INFO_REQUEST_CMD:
 		handler.NewPeer(sender, cmd.Source, cmd.Sarg[0], true)
 		if cmd.Sarg[1] != "" {
-			handler.LeaderChanged(sender, PeerAddr(cmd.Sarg[1]))
+			handler.LeaderChanged(sender, PeerAddr(cmd.Sarg[1]), 0)
 		}
 	case PEER_INFO_RESPONSE_CMD:
 		handler.NewPeer(sender, cmd.Source, cmd.Sarg[0], false)
 	case SET_LEADER_CMD:
-		handler.LeaderChanged(sender, PeerAddr(cmd.Sarg[0]))
+		handler.LeaderChanged(sender, PeerAddr(cmd.Sarg[0]), cmd.Iarg[0])
 	case REPORT_PEER_CMD:
 		handler.PeerReported(PeerAddr(cmd.Sarg[0]))
 	case REMOVE_PEER_CMD:
