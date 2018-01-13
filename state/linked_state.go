@@ -11,6 +11,7 @@ import (
 type LinkedState struct {
 	DiscoveryState
 }
+
 func (s *LinkedState) Init() {
 	logger.Info("Current state: LINKED")
 }
@@ -29,19 +30,24 @@ func (s *LinkedState) LeaderChanged(sender common.PeerAddr, leader common.PeerAd
 
 func (s *LinkedState) DistanceReceived(sender common.PeerAddr, distance int) {
 	distance++
+	updated := false
 	if sender == s.Ctx.LinkedPeers[0] {
 		s.Ctx.LeaderDistance[0] = distance
 		net.SendToHi(s.Ctx, common.NewLeaderDistanceResponseCommand(distance))
 		logger.Info("Leader distance updated: %v", s.Ctx.LeaderDistance)
-	} else if sender == s.Ctx.LinkedPeers[1] {
+		updated = true
+	}
+	if sender == s.Ctx.LinkedPeers[1] {
 		s.Ctx.LeaderDistance[1] = distance
 		net.SendToLo(s.Ctx, common.NewLeaderDistanceResponseCommand(distance))
+		updated = true
+	}
+	if updated {
 		logger.Info("Leader distance updated: %v", s.Ctx.LeaderDistance)
 	} else {
 		logger.Warn("Distance received from %v, but it's not in linked peers", sender)
 	}
 }
-
 
 func (s *LinkedState) Name() string {
 	return "Linked state state"
@@ -50,12 +56,12 @@ func (s *LinkedState) Name() string {
 func (s *LinkedState) ActionStartChRo() {
 	fmt.Println("Peer has already joined the ring")
 }
-func (s *LinkedState)  ActionSetValue(value int) {
+func (s *LinkedState) ActionSetValue(value int) {
 	fmt.Println("Set requested")
 	s.RequestDistancesIfMissing()
 	net.SendToRingLeader(s.Ctx, common.NewSetRequestCommand(value))
 }
-func (s *LinkedState)  ActionGetValue() {
+func (s *LinkedState) ActionGetValue() {
 	fmt.Println("Get requested")
 	s.RequestDistancesIfMissing()
 	net.SendToRingLeader(s.Ctx, common.NewGetRequestCommand())
