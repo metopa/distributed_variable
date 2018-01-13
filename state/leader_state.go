@@ -63,8 +63,10 @@ func (s *LeaderState)PeerReported(reportedPeer common.PeerAddr) {
 	logger.Warn("Peer %v removed", reportedPeer)
 	s.Ctx.RemovePeer(reportedPeer)
 	logger.Info("Linked peers after remove: %v", s.Ctx.LinkedPeers) //TODO Remove
-	go net.SendToHi(s.Ctx, common.NewRemovePeerCommand(reportedPeer))
-	net.SendToLo(s.Ctx, common.NewRemovePeerCommand(reportedPeer))
+	go net.SendToHi(s.Ctx, common.NewRemovePeerCommand(reportedPeer), true)
+	go net.SendToLo(s.Ctx, common.NewRemovePeerCommand(reportedPeer), true)
+	time.Sleep(time.Second)
+	s.EmitDistanceBroadcast()
 }
 func (s *LeaderState)PeerRemoved(sender common.PeerAddr, reportedPeer common.PeerAddr) {}
 
@@ -75,8 +77,8 @@ func (s *LeaderState) DistanceRequested(sender common.PeerAddr, source common.Pe
 func (s *LeaderState) DistanceReceived(sender common.PeerAddr, distance int) {}
 
 func (s *LeaderState) EmitDistanceBroadcast() {
-	go net.SendToHi(s.Ctx, common.NewLeaderDistanceResponseCommand(0))
-	net.SendToLo(s.Ctx, common.NewLeaderDistanceResponseCommand(0))
+	go net.SendToHi(s.Ctx, common.NewLeaderDistanceResponseCommand(0), true)
+	net.SendToLo(s.Ctx, common.NewLeaderDistanceResponseCommand(0), true)
 }
 
 func (s *LeaderState) Name() string {

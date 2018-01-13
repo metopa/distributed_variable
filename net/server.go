@@ -95,7 +95,7 @@ func (s *TcpServer) handleConnection(conn *net.TCPConn) {
 			if cmd.Source == s.ctx.ServerAddr {
 				return
 			} else {
-				go SendToHi(s.ctx, cmd)
+				go SendToHi(s.ctx, cmd, false)
 				common.DispatchCommand(s.ctx.GetState(), senderAddr, cmd)
 				return
 			}

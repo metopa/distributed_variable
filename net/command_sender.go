@@ -11,7 +11,7 @@ import (
 
 const DEFAULT_TTL = 20
 
-func SendToDirectly(ctx *common.Context, destination common.PeerAddr, cmd common.Command) {
+func SendToDirectly(ctx *common.Context, destination common.PeerAddr, cmd common.Command) error {
 	initServiceFields(&cmd, ctx, destination)
 	err := sendImpl(&cmd, ctx, destination)
 	infoStr := common.GetTransmissionInfoString(
@@ -21,6 +21,7 @@ func SendToDirectly(ctx *common.Context, destination common.PeerAddr, cmd common
 	} else {
 		logger.Info("Send %v(%v): OK", cmd, infoStr)
 	}
+	return err
 }
 
 func SendToReliable(ctx *common.Context, mainDest common.PeerAddr, altDest common.PeerAddr, cmd common.Command) {
@@ -54,21 +55,27 @@ func SendToReliable(ctx *common.Context, mainDest common.PeerAddr, altDest commo
 	}
 }
 
-func SendToHi(ctx *common.Context, cmd common.Command) {
+func SendToHi(ctx *common.Context, cmd common.Command, report bool) {
 	addr := ctx.LinkedPeers[1]
 	if len(addr) == 0 {
 		logger.Warn("Hi peer is unknown, send canceled")
 	} else {
-		SendToDirectly(ctx, addr, cmd)
+		err := SendToDirectly(ctx, addr, cmd)
+		if err != nil && report {
+			ctx.GetState().ActionReportPeer(addr)
+		}
 	}
 }
 
-func SendToLo(ctx *common.Context, cmd common.Command) {
+func SendToLo(ctx *common.Context, cmd common.Command, report bool) {
 	addr := ctx.LinkedPeers[0]
 	if len(addr) == 0 {
 		logger.Warn("Lo peer is unknown, send canceled")
 	} else {
-		SendToDirectly(ctx, addr, cmd)
+		err := SendToDirectly(ctx, addr, cmd)
+		if err != nil && report {
+			ctx.GetState().ActionReportPeer(addr)
+		}
 	}
 }
 
@@ -114,7 +121,7 @@ func ReplyInRing(ctx *common.Context, from common.PeerAddr, cmd common.Command) 
 
 func BroadcastInRing(ctx *common.Context, cmd common.Command) {
 	cmd.Destination = "BROADCAST"
-	SendToHi(ctx, cmd)
+	SendToHi(ctx, cmd, false)
 }
 
 func initServiceFields(cmd *common.Command, ctx *common.Context, destination common.PeerAddr) {

@@ -59,7 +59,7 @@ func (h *DiscoveryState) Pong(sender common.PeerAddr, source common.PeerAddr) {
 
 func (h *DiscoveryState) ChRoIdReceived(sender common.PeerAddr, id int) {
 	if id > h.Ctx.PeerId {
-		net.SendToHi(h.Ctx, common.NewChangRobertIdCmd(id))
+		net.SendToHi(h.Ctx, common.NewChangRobertIdCmd(id), false)
 	} else if id == h.Ctx.PeerId {
 		h.Ctx.Leader = h.Ctx.ServerAddr
 		ls := &LeaderState{DiscoveryState: *h}

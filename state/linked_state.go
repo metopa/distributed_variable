@@ -33,13 +33,13 @@ func (s *LinkedState) DistanceReceived(sender common.PeerAddr, distance int) {
 	updated := false
 	if sender == s.Ctx.LinkedPeers[0] {
 		s.Ctx.LeaderDistance[0] = distance
-		go net.SendToHi(s.Ctx, common.NewLeaderDistanceResponseCommand(distance))
+		go net.SendToHi(s.Ctx, common.NewLeaderDistanceResponseCommand(distance), true)
 		logger.Info("Leader distance updated: %v", s.Ctx.LeaderDistance)
 		updated = true
 	}
 	if sender == s.Ctx.LinkedPeers[1] {
 		s.Ctx.LeaderDistance[1] = distance
-		go net.SendToLo(s.Ctx, common.NewLeaderDistanceResponseCommand(distance))
+		go net.SendToLo(s.Ctx, common.NewLeaderDistanceResponseCommand(distance), true)
 		updated = true
 	}
 	if updated {
@@ -56,9 +56,9 @@ func (s *LinkedState) PeerRemoved(sender common.PeerAddr, removedPeer common.Pee
 	logger.Info("Linked peers after remove: %v", s.Ctx.LinkedPeers) //TODO Remove
 
 	if fromLo {
-		net.SendToHi(s.Ctx, common.NewRemovePeerCommand(removedPeer))
+		net.SendToHi(s.Ctx, common.NewRemovePeerCommand(removedPeer), true)
 	} else {
-		net.SendToLo(s.Ctx, common.NewRemovePeerCommand(removedPeer))
+		net.SendToLo(s.Ctx, common.NewRemovePeerCommand(removedPeer), true)
 	}
 }
 
@@ -95,8 +95,8 @@ func (s *LinkedState) ActionReportPeer(addr common.PeerAddr) {
 	cmd := common.NewReportPeerCommand(addr)
 	cmd.Destination = s.Ctx.Leader
 	if addr == s.Ctx.LinkedPeers[0] {
-		net.SendToHi(s.Ctx, cmd)
+		net.SendToHi(s.Ctx, cmd, false)
 	} else {
-		net.SendToLo(s.Ctx, cmd)
+		net.SendToLo(s.Ctx, cmd, false)
 	}
 }
