@@ -108,3 +108,7 @@ func (s *LinkedState) ActionLeave() bool {
 	time.Sleep(time.Second / 10)
 	return true
 }
+
+func (s *LinkedState) ActionSync() {
+	net.SendToRingLeader(s.Ctx, common.NewLeaderDistanceRequestCommand())
+}

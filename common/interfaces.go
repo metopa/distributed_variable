@@ -6,6 +6,7 @@ type ActionHandler interface {
 	ActionStartChRo()
 	ActionLeave() bool
 	ActionDisconnect()
+	ActionSync()
 	ActionReconnect()
 	ActionReportPeer(addr PeerAddr)
 }

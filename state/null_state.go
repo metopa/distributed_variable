@@ -74,6 +74,9 @@ func (s *NullState) ActionDisconnect() {
 func (s *NullState) ActionReconnect() {
 	NotHandled()
 }
+func (s *NullState) ActionSync() {
+	NotHandled()
+}
 func (s *NullState)ActionReportPeer(addr common.PeerAddr) {
 	NotHandled()
 }

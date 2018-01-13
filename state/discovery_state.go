@@ -126,6 +126,10 @@ func (s *DiscoveryState) ActionLeave() bool {
 	return true
 }
 
+func (h *DiscoveryState) ActionSync() {
+	logger.Info("Peer is not in the ring, no synchronization needed")
+}
+
 func (h *DiscoveryState) Name() string {
 	return "Discovery state"
 }

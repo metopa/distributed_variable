@@ -108,3 +108,8 @@ func (s *LeaderState) ActionLeave() bool {
 	net.SendToRingLeader(s.Ctx, common.NewReportPeerCommand(s.Ctx.ServerAddr))
 	return true
 }
+
+
+func (s *LeaderState) ActionSync() {
+	s.EmitDistanceBroadcast()
+}

@@ -32,6 +32,8 @@ func handleAction(action string, handler common.ActionHandler) bool {
 		go handler.ActionStartChRo()
 	} else if action == "get" {
 		go handler.ActionGetValue()
+	} else if action == "sync" {
+		go handler.ActionSync()
 	} else {
 		m := setValueRegex.FindStringSubmatch(action)
 
@@ -50,7 +52,7 @@ func handleAction(action string, handler common.ActionHandler) bool {
 			return true
 		} else {
 			fmt.Printf("Unknown command: %v\n", action)
-			fmt.Print("Valid commands:\n\trun\n\tleave\n\tdisconnect\n\tget\n\tset %d\n")
+			fmt.Print("Valid commands:\n\trun\n\tleave\n\tdisconnect\n\tsync\n\tget\n\tset %d\n")
 		}
 	}
 	return false
