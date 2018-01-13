@@ -48,6 +48,13 @@ func (h *DiscoveryState) SyncPeers(sender common.PeerAddr, values []string) {
 	net.StartChRoTimer(h.Ctx)
 }
 
+func (s *DiscoveryState) PeerRemoved(sender common.PeerAddr, removedPeer common.PeerAddr) {
+	logger.Warn("Peer %v removed", removedPeer)
+
+	s.Ctx.RemovePeer(removedPeer)
+	logger.Info("Linked peers after remove: %v", s.Ctx.LinkedPeers)
+}
+
 func (h *DiscoveryState) Ping(sender common.PeerAddr, source common.PeerAddr) {
 	net.SendToDirectly(h.Ctx, source, common.NewPongCmd())
 }
