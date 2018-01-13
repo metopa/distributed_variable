@@ -54,16 +54,6 @@ func SendToReliable(ctx *common.Context, mainDest common.PeerAddr, altDest commo
 	}
 }
 
-func SendToRingLeader(ctx *common.Context, cmd common.Command) {
-	cmd.Destination = ctx.Leader
-	if ctx.LeaderDistance[1] == -1 ||
-		(ctx.LeaderDistance[0] != -1 && ctx.LeaderDistance[0] < ctx.LeaderDistance[1]) {
-		SendToLo(ctx, cmd)
-	} else {
-		SendToHi(ctx, cmd)
-	}
-}
-
 func SendToHi(ctx *common.Context, cmd common.Command) {
 	addr := ctx.LinkedPeers[1]
 	if len(addr) == 0 {
@@ -90,6 +80,16 @@ func SendToHiReliable(ctx *common.Context, cmd common.Command) {
 	SendToReliable(ctx, ctx.LinkedPeers[1], ctx.LinkedPeers[0], cmd)
 }
 
+func SendToRingLeader(ctx *common.Context, cmd common.Command) {
+	cmd.Destination = ctx.Leader
+	if ctx.LeaderDistance[1] == -1 ||
+		(ctx.LeaderDistance[0] != -1 && ctx.LeaderDistance[0] < ctx.LeaderDistance[1]) {
+		SendToLoReliable(ctx, cmd)
+	} else {
+		SendToHiReliable(ctx, cmd)
+	}
+}
+
 func ForwardInRing(ctx *common.Context, from common.PeerAddr, cmd common.Command) {
 	if from == ctx.LinkedPeers[0] {
 		SendToHi(ctx, cmd)
@@ -103,12 +103,12 @@ func ForwardInRing(ctx *common.Context, from common.PeerAddr, cmd common.Command
 
 func ReplyInRing(ctx *common.Context, from common.PeerAddr, cmd common.Command) {
 	if from == ctx.LinkedPeers[0] {
-		SendToLo(ctx, cmd)
+		SendToLoReliable(ctx, cmd)
 	} else if from == ctx.LinkedPeers[1] {
-		SendToHi(ctx, cmd)
+		SendToHiReliable(ctx, cmd)
 	} else {
 		logger.Warn("Tried to reply %v to %v, but linked peers are %v", cmd, from, ctx.LinkedPeers)
-		SendToHi(ctx, cmd)
+		SendToHiReliable(ctx, cmd)
 	}
 }
 
