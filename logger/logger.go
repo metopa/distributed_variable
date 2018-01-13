@@ -48,7 +48,7 @@ func Info(format string, v ...interface{}) {
 }
 
 func Warn(format string, v ...interface{}) {
-	defaultLogger.Info(format, v...)
+	defaultLogger.Warn(format, v...)
 }
 
 func Fatal(format string, v ...interface{}) {

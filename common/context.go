@@ -72,6 +72,13 @@ func (ctx *Context) ResolvePeerName(addr PeerAddr) string {
 	return string(addr) + res
 }
 
+func (ctx *Context) SetKnownPeers(peers map[PeerAddr]PeerInfo) {
+	ctx.KnownPeers = make(map[PeerAddr]PeerInfo)
+	for _, v := range peers {
+		ctx.AddNewPeer(v.Name, v.Addr)
+	}
+}
+
 func (ctx *Context) CASState(current, new State) bool {
 	ctx.StateSync.Lock()
 	defer ctx.StateSync.Unlock()
