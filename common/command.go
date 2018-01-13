@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -132,6 +133,8 @@ func DispatchCommand(handler CommandHandler, sender PeerAddr, cmd Command) {
 		handler.NewPeer(sender, cmd.Source, cmd.Sarg[0], true)
 	case PEER_INFO_RESPONSE_CMD:
 		handler.NewPeer(sender, cmd.Source, cmd.Sarg[0], false)
+		js, _ := json.MarshalIndent(&cmd, ":", "  ")
+		fmt.Println(string(js))
 		if cmd.Sarg[1] != "" {
 			handler.LeaderChanged(sender, PeerAddr(cmd.Sarg[1]))
 		}
