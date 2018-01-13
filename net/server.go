@@ -79,7 +79,7 @@ func (s *TcpServer) handleConnection(conn *net.TCPConn) {
 		return
 	}
 
-	s.ctx.Clock.SyncAfter(cmd.Clock)
+	s.ctx.Clock.SyncAfter(cmd.Clock, 1)
 
 	senderAddr := cmd.From
 	if senderAddr == "" {
