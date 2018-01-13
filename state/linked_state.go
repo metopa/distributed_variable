@@ -32,10 +32,10 @@ func (s *LinkedState) LeaderChanged(sender common.PeerAddr, leader common.PeerAd
 func (s *LinkedState) DistanceReceived(sender common.PeerAddr, distance int) {
 	distance++
 	updated := false
+	prevDistances := s.Ctx.LeaderDistance
 	if sender == s.Ctx.LinkedPeers[0] {
 		s.Ctx.LeaderDistance[0] = distance
 		go net.SendToHi(s.Ctx, common.NewLeaderDistanceResponseCommand(distance), true)
-		logger.Info("Leader distance updated: %v", s.Ctx.LeaderDistance)
 		updated = true
 	}
 	if sender == s.Ctx.LinkedPeers[1] {
@@ -43,7 +43,8 @@ func (s *LinkedState) DistanceReceived(sender common.PeerAddr, distance int) {
 		go net.SendToLo(s.Ctx, common.NewLeaderDistanceResponseCommand(distance), true)
 		updated = true
 	}
-	if updated {
+
+	if updated && prevDistances != s.Ctx.LeaderDistance {
 		logger.Info("Leader distance updated: %v", s.Ctx.LeaderDistance)
 	} else {
 		logger.Warn("Distance received from %v, but it's not in linked peers", sender)
@@ -54,7 +55,6 @@ func (s *LinkedState) PeerRemoved(sender common.PeerAddr, removedPeer common.Pee
 	logger.Warn("Peer %v removed", removedPeer)
 	fromLo := sender == s.Ctx.LinkedPeers[0]
 	s.Ctx.RemovePeer(removedPeer)
-	logger.Info("Linked peers after remove: %v", s.Ctx.LinkedPeers) //TODO Remove
 
 	if fromLo {
 		net.SendToHi(s.Ctx, common.NewRemovePeerCommand(removedPeer), true)
@@ -71,12 +71,10 @@ func (s *LinkedState) ActionStartChRo() {
 	fmt.Println("Peer has already joined the ring")
 }
 func (s *LinkedState) ActionSetValue(value int) {
-	fmt.Println("Set requested")
 	s.RequestDistancesIfMissing()
 	net.SendToRingLeader(s.Ctx, common.NewSetRequestCommand(value))
 }
 func (s *LinkedState) ActionGetValue() {
-	fmt.Println("Get requested")
 	s.RequestDistancesIfMissing()
 	net.SendToRingLeader(s.Ctx, common.NewGetRequestCommand())
 }
@@ -89,7 +87,7 @@ func (s *LinkedState) RequestDistancesIfMissing() {
 }
 func (s *LinkedState) ActionReportPeer(addr common.PeerAddr) {
 	if addr == s.Ctx.Leader {
-		logger.Warn("Reporting peer %v, but it's leader", addr)
+		logger.Warn("Wanted to report peer %v, but it's leader", addr)
 		return
 	}
 	logger.Warn("Reporting peer %v", addr)

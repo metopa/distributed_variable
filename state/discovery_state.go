@@ -21,6 +21,7 @@ func (s *DiscoveryState) Init() {
 func (h *DiscoveryState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
 	name string, shouldReply bool) {
 	h.Ctx.AddNewPeer(name, addr)
+	logger.Info("Added new peer: %v(%v), linked peers: %v", name, addr, h.Ctx.LinkedPeers)
 	if shouldReply {
 		net.SendToDirectly(h.Ctx, addr,
 			common.NewPeerInfoResponseCommand(h.Ctx.Name))
@@ -29,7 +30,7 @@ func (h *DiscoveryState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
 
 func (h *DiscoveryState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr) {
 	if leader != h.Ctx.Leader {
-		logger.Info("New leader: %v, prev: %v", leader, h.Ctx.Leader)
+		logger.Info("New leader: %v", leader)
 		h.Ctx.Leader = leader
 		ls := &LinkedState{*h}
 		h.Ctx.CASState(h, ls)
@@ -52,7 +53,6 @@ func (s *DiscoveryState) PeerRemoved(sender common.PeerAddr, removedPeer common.
 	logger.Warn("Peer %v removed", removedPeer)
 
 	s.Ctx.RemovePeer(removedPeer)
-	logger.Info("Linked peers after remove: %v", s.Ctx.LinkedPeers)
 }
 
 func (h *DiscoveryState) Ping(sender common.PeerAddr, source common.PeerAddr) {

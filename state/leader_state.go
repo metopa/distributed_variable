@@ -26,8 +26,7 @@ func (s *LeaderState) Init() {
 func (s *LeaderState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
 	name string, shouldReply bool) {
 	s.Ctx.AddNewPeer(name, addr)
-	logger.Info("Added new peer: %v(%v)", name, addr)
-	logger.Info("Linked peers: %v", s.Ctx.LinkedPeers)
+	logger.Info("Added new peer: %v(%v), linked peers: %v", name, addr, s.Ctx.LinkedPeers)
 	if shouldReply {
 		net.SendToDirectly(s.Ctx, addr,
 			common.NewPeerInfoResponseCommand(s.Ctx.Name))
@@ -62,10 +61,9 @@ func (s *LeaderState) LeaderChanged(sender common.PeerAddr, leader common.PeerAd
 func (s *LeaderState)PeerReported(reportedPeer common.PeerAddr) {
 	logger.Warn("Peer %v removed", reportedPeer)
 	s.Ctx.RemovePeer(reportedPeer)
-	logger.Info("Linked peers after remove: %v", s.Ctx.LinkedPeers) //TODO Remove
 	go net.SendToHi(s.Ctx, common.NewRemovePeerCommand(reportedPeer), true)
 	go net.SendToLo(s.Ctx, common.NewRemovePeerCommand(reportedPeer), true)
-	time.Sleep(time.Second)
+	time.Sleep(time.Second / 2)
 	s.EmitDistanceBroadcast()
 }
 func (s *LeaderState)PeerRemoved(sender common.PeerAddr, reportedPeer common.PeerAddr) {}

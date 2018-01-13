@@ -48,7 +48,6 @@ func SendToReliable(ctx *common.Context, mainDest common.PeerAddr, altDest commo
 	}
 	err = sendImpl(&cmd, ctx, altDest)
 	if err != nil {
-		//TODO report peer
 		logger.Warn("Send %v(%v): Alt: Error: %v", cmd, infoStr, err)
 	} else {
 		logger.Info("Send %v(%v): Alt: OK", cmd, infoStr)
