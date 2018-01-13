@@ -17,17 +17,18 @@ var MULTICAST_IP = net.IPv4(224, 0, 0, 64)
 var MULTICAST_ADDR = &net.UDPAddr{IP: MULTICAST_IP, Port: MULTICAST_PORT}
 
 type DiscoveryServer struct {
-	stop                  bool
 	ownDiscoverResponse   string
 	packetConnTransport   net.PacketConn
 	packetConn            *ipv4.PacketConn
+	ctx                   *common.Context
 	discoveryEventHandler func(discoverResponse string)
 }
 
-func NewDiscoveryServer(discoverResponse string,
+func NewDiscoveryServer(ctx *common.Context, discoverResponse string,
 	discoveryEventHandler func(discoverResponse string)) *DiscoveryServer {
 	return &DiscoveryServer{
 		ownDiscoverResponse:   discoverResponse,
+		ctx:                   ctx,
 		discoveryEventHandler: discoveryEventHandler}
 }
 
@@ -56,10 +57,6 @@ func (s *DiscoveryServer) StartOn(iface *net.Interface) {
 
 	go s.listen()
 	logger.Info("Started UDP Discovery service")
-}
-
-func (s *DiscoveryServer) Stop() {
-	s.stop = true
 }
 
 func (s *DiscoveryServer) SendDiscoveryRequest() {
@@ -107,7 +104,7 @@ func (s *DiscoveryServer) listen() {
 	defer s.packetConnTransport.Close()
 
 	buf := make([]byte, 1024)
-	for !s.stop {
+	for !s.ctx.StopFlag {
 		s.packetConn.SetReadDeadline(time.Now().Add(time.Second * 5))
 		n, cm, _, err := s.packetConn.ReadFrom(buf)
 

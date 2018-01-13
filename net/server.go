@@ -38,9 +38,6 @@ func (s *TcpServer) Listen() {
 	go s.accept()
 }
 
-func (s *TcpServer) Stop() {
-	s.stop = true
-}
 
 func (s *TcpServer) Port() int {
 	if s.listener == nil {
@@ -54,7 +51,7 @@ func (s *TcpServer) Port() int {
 }
 
 func (s *TcpServer) accept() {
-	for !s.stop {
+	for !s.ctx.StopFlag {
 		s.listener.SetDeadline(time.Now().Add(time.Second * 3))
 		conn, err := s.listener.AcceptTCP()
 		if err != nil {
@@ -88,7 +85,7 @@ func (s *TcpServer) handleConnection(conn *net.TCPConn) {
 	}
 	sender := s.ctx.ResolvePeerName(senderAddr)
 
-	//logger.Info("Session #%v(%v): Received %v[%v]", sessionId, sender, cmd, cmd.Clock.Value  )
+	//logger.Info("Session #%v(%v): Received %v[%v]", sessionId, sender, cmd, cmd.Clock.Value)
 
 	if cmd.Destination != s.ctx.ServerAddr {
 		if cmd.Destination == "BROADCAST" {

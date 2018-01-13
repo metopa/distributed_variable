@@ -1,12 +1,9 @@
 package console
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/metopa/distributed_variable/common"
 	"github.com/metopa/distributed_variable/logger"
@@ -14,40 +11,26 @@ import (
 
 var setValueRegex = regexp.MustCompile("set\\s+([0-9]+)")
 
-func ListenConsole(ctx *common.Context, stop *chan struct{}) {
-	ch := make(chan string)
-	go func(ch chan string) {
-		reader := bufio.NewReader(os.Stdin)
-		for {
-			s, err := reader.ReadString('\n')
-			if err != nil {
-				close(ch)
-				return
-			}
-			s = strings.TrimRight(s, "\n \t")
-			ch <- s
-		}
-	}(ch)
 
+func ListenConsole(ctx *common.Context, stdInChan chan string) {
 	for {
-		select {
-		case str, ok := <-ch:
-			if !ok {
-				return
-			} else {
-				handleAction(str, ctx.GetState())
-			}
-		case <-*stop:
+		str, ok := <-stdInChan
+		if !ok {
 			return
+		} else {
+			if handleAction(str, ctx.GetState()) {
+				return
+			}
 		}
 	}
 }
-func handleAction(action string, handler common.ActionHandler) {
+
+func handleAction(action string, handler common.ActionHandler) bool {
 	if action == "" {
-		return
+		return false
 	}
 	if action == "?" {
-		fmt.Print("Available commands:\n\tstart\n\tget\n\tset %d\n\tleave\n\force-leave\n\treconnect\n")
+		fmt.Print("Available commands:\n\tstart\n\tget\n\tset %d\n\tleave\n\tdisconnect\n")
 	} else if action == "start" {
 		go handler.ActionStartChRo()
 	} else if action == "get" {
@@ -63,13 +46,13 @@ func handleAction(action string, handler common.ActionHandler) {
 				go handler.ActionSetValue(n)
 			}
 		} else if action == "leave" {
-			go handler.ActionLeave()
-		} else if action == "force-leave" {
-			go handler.ActionDisconnect()
-		} else if action == "reconnect" {
-			go handler.ActionReconnect()
+			handler.ActionLeave()
+			return true
+		} else if action == "disconnect" {
+			return true
 		} else {
 			logger.Warn("Unknown command: %v", action)
 		}
 	}
+	return false
 }

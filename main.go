@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"flag"
+	"fmt"
 	"math/rand"
 	"net"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/metopa/distributed_variable/common"
@@ -30,7 +34,30 @@ func main() {
 		logger.Fatal("%v", err)
 	}
 	rand.Seed(time.Now().UnixNano())
+	stdInChan := make(chan string)
+	go stdInStream(stdInChan)
 
+MAIN_LOOP:
+	for {
+		runDistributedApp(iface, stdInChan)
+
+		for {
+			input, ok := <-stdInChan
+			if ! ok || input == "exit" {
+				break MAIN_LOOP
+			} else if input == "reconnect" {
+				break
+			} else {
+				fmt.Println("Valid commands: exit reconnect")
+			}
+		}
+	}
+	fmt.Println("Terminating...")
+	time.Sleep(time.Second * 2)
+	fmt.Println("Terminated")
+}
+
+func runDistributedApp(iface *net.Interface, stdInChan chan string) {
 	ctx := common.NewContext(common.PickRandomName(), 3, time.Second, time.Second*2)
 	logger.SetContext(ctx)
 	ctx.SetState(&state.DiscoveryState{Ctx: ctx})
@@ -47,7 +74,7 @@ func main() {
 	logger.Info("Peer id:      %d", ctx.PeerId)
 	logger.Info("Peer address: %s", string(ctx.ServerAddr))
 
-	discoveryServer := dv_net.NewDiscoveryServer(string(ctx.ServerAddr),
+	discoveryServer := dv_net.NewDiscoveryServer(ctx, string(ctx.ServerAddr),
 		func(response string) {
 			logger.Info("New discovery request from %v", response)
 			dv_net.SendToDirectly(ctx, common.PeerAddr(response),
@@ -56,8 +83,20 @@ func main() {
 	discoveryServer.StartOn(iface)
 	discoveryServer.SendDiscoveryRequestOn(iface)
 
-	stop := make(chan struct{}, 2)
-	console.ListenConsole(ctx, &stop)
-	time.Sleep(time.Hour)
+	console.ListenConsole(ctx, stdInChan)
+	ctx.StopFlag = true
+	return
+}
 
+func stdInStream(ch chan string) {
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		s, err := reader.ReadString('\n')
+		if err != nil {
+			close(ch)
+			return
+		}
+		s = strings.TrimRight(s, "\n \t")
+		ch <- s
+	}
 }
