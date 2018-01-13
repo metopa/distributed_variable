@@ -32,6 +32,14 @@ func (s *LeaderState) ValueSetRequested(sender common.PeerAddr,
 	net.ReplyInRing(s.Ctx, sender, cmd)
 }
 
+func (s *LeaderState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr) {
+	if leader != s.Ctx.Leader {
+		logger.Warn("Leader transition is unsupported", leader, s.Ctx.Leader)
+		//TODO Set Linked state
+		//TODO Send current value
+	}
+}
+
 func (s *LeaderState) Name() string {
 	return "Leader state"
 }

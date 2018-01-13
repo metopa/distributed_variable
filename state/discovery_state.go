@@ -27,10 +27,11 @@ func (h *DiscoveryState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
 }
 
 func (h *DiscoveryState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr) {
-	h.Ctx.Leader = leader
-	ls := &LinkedState{*h}
-	if h.Ctx.CASState(h, ls) {
-		logger.Info("%v is ring leader", leader)
+	if leader != h.Ctx.Leader {
+		logger.Info("New leader: %v, prev: %v", leader, h.Ctx.Leader)
+		h.Ctx.Leader = leader
+		ls := &LinkedState{*h}
+		h.Ctx.CASState(h, ls)
 	}
 }
 

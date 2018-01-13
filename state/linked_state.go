@@ -21,6 +21,12 @@ func (s *LinkedState) ValueSetConfirmed(sender common.PeerAddr) {
 	fmt.Printf("Value is updated\n")
 }
 
+func (s *LinkedState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr) {
+	logger.Info("New leader: %v, prev: %v", leader, s.Ctx.Leader)
+	s.Ctx.Leader = leader
+	//TODO Check we're not the leader
+}
+
 func (s *LinkedState) Name() string {
 	return "Linked state state"
 }
