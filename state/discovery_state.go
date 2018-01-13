@@ -89,6 +89,10 @@ func (h *DiscoveryState) ActionStartChRo() {
 	}
 	h.Ctx.KnownPeers = alivePeers
 	h.Ctx.Sync.Unlock()
+	if len(alivePeers) == 0 {
+		logger.Warn("No other peers connected, can't build peer ring")
+		return
+	}
 
 	cmd := common.NewSyncPeersCmd(alivePeers)
 	h.Ctx.Sync.Lock()
