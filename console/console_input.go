@@ -46,8 +46,9 @@ func handleAction(action string, handler common.ActionHandler) bool {
 				go handler.ActionSetValue(n)
 			}
 		} else if action == "leave" {
-			handler.ActionLeave()
-			return true
+			if handler.ActionLeave() {
+				return true
+			}
 		} else if action == "disconnect" {
 			return true
 		} else {

@@ -4,7 +4,7 @@ type ActionHandler interface {
 	ActionSetValue(value int)
 	ActionGetValue()
 	ActionStartChRo()
-	ActionLeave()
+	ActionLeave() bool
 	ActionDisconnect()
 	ActionReconnect()
 	ActionReportPeer(addr PeerAddr)

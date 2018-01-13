@@ -122,5 +122,5 @@ func (s *DiscoveryServer) listen() {
 			}
 		}
 	}
-	logger.Info("Shut down UDP Discovery service")
+	logger.Info("Stopped UDP Discovery service")
 }

@@ -64,8 +64,9 @@ func (s *NullState) ActionGetValue() {
 func (s *NullState) ActionStartChRo() {
 	NotHandled()
 }
-func (s *NullState) ActionLeave() {
+func (s *NullState) ActionLeave() bool {
 	NotHandled()
+	return false
 }
 func (s *NullState) ActionDisconnect() {
 	NotHandled()

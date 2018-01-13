@@ -100,3 +100,7 @@ func (s *LeaderState) ActionGetValue() {
 func (s *LeaderState) ActionReportPeer(addr common.PeerAddr) {
 	s.PeerReported(addr)
 }
+func (s *LeaderState) ActionLeave() bool {
+	logger.Warn("Leader transfer is not supported")
+	return false
+}

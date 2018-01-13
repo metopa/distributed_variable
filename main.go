@@ -43,12 +43,12 @@ MAIN_LOOP:
 
 		for {
 			input, ok := <-stdInChan
-			if ! ok || input == "exit" {
+			if !ok || input == "exit" {
 				break MAIN_LOOP
-			} else if input == "reconnect" {
+			} else if input == "restart" {
 				break
 			} else {
-				fmt.Println("Valid commands: exit reconnect")
+				fmt.Println("Valid commands: exit restart")
 			}
 		}
 	}

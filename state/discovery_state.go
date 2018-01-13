@@ -37,7 +37,6 @@ func (h *DiscoveryState) LeaderChanged(sender common.PeerAddr, leader common.Pee
 }
 
 func (h *DiscoveryState) SyncPeers(sender common.PeerAddr, values []string) {
-	//TODO Lock peers?
 	peers := make(map[common.PeerAddr]common.PeerInfo)
 	for i := 0; i < len(values); i += 2 {
 		peers[common.PeerAddr(values[i])] = common.PeerInfo{
@@ -68,7 +67,6 @@ func (h *DiscoveryState) ChRoIdReceived(sender common.PeerAddr, id int) {
 }
 
 func (h *DiscoveryState) ActionStartChRo() {
-	//TODO Lock peer list
 	if len(h.Ctx.KnownPeers) == 0 {
 		logger.Warn("No other peers connected, can't build peer ring")
 		return
@@ -108,6 +106,17 @@ func (h *DiscoveryState) ActionStartChRo() {
 	}
 	h.Ctx.Sync.Unlock()
 	net.StartChRoTimer(h.Ctx)
+}
+
+func (s *DiscoveryState) ActionLeave() bool {
+	cmd := common.NewRemovePeerCommand(s.Ctx.ServerAddr)
+	s.Ctx.Sync.Lock()
+	for addr, _ := range s.Ctx.KnownPeers {
+		go net.SendToDirectly(s.Ctx, addr, cmd)
+	}
+	s.Ctx.Sync.Unlock()
+	time.Sleep(time.Second / 10)
+	return true
 }
 
 func (h *DiscoveryState) Name() string {

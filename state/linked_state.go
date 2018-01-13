@@ -2,6 +2,7 @@ package state
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/metopa/distributed_variable/common"
 	"github.com/metopa/distributed_variable/logger"
@@ -99,4 +100,10 @@ func (s *LinkedState) ActionReportPeer(addr common.PeerAddr) {
 	} else {
 		net.SendToLo(s.Ctx, cmd, false)
 	}
+}
+
+func (s *LinkedState) ActionLeave() bool {
+	net.SendToRingLeader(s.Ctx, common.NewReportPeerCommand(s.Ctx.ServerAddr))
+	time.Sleep(time.Second / 10)
+	return true
 }
