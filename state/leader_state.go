@@ -23,6 +23,18 @@ func (s *LeaderState) Init() {
 	}(s)
 
 }
+func (s *LeaderState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
+	name string, shouldReply bool) {
+	s.Ctx.AddNewPeer(name, addr)
+	logger.Info("Added new peer: %v(%v)", name, addr)
+	logger.Info("Linked peers: %v", s.Ctx.LinkedPeers)
+	if shouldReply {
+		net.SendToDirectly(s.Ctx, addr,
+			common.NewPeerInfoResponseCommand(s.Ctx.Name))
+	}
+	s.EmitDistanceBroadcast()
+}
+
 
 func (s *LeaderState) ValueGetRequested(sender common.PeerAddr, source common.PeerAddr) {
 	cmd := common.NewGetResponseCommand(s.Value)
