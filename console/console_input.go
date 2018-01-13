@@ -6,11 +6,9 @@ import (
 	"strconv"
 
 	"github.com/metopa/distributed_variable/common"
-	"github.com/metopa/distributed_variable/logger"
 )
 
 var setValueRegex = regexp.MustCompile("set\\s+([0-9]+)")
-
 
 func ListenConsole(ctx *common.Context, stdInChan chan string) {
 	for {
@@ -30,8 +28,7 @@ func handleAction(action string, handler common.ActionHandler) bool {
 		return false
 	}
 	if action == "?" {
-		fmt.Print("Available commands:\n\tstart\n\tget\n\tset %d\n\tleave\n\tdisconnect\n")
-	} else if action == "start" {
+	} else if action == "run" {
 		go handler.ActionStartChRo()
 	} else if action == "get" {
 		go handler.ActionGetValue()
@@ -52,7 +49,8 @@ func handleAction(action string, handler common.ActionHandler) bool {
 		} else if action == "disconnect" {
 			return true
 		} else {
-			logger.Warn("Unknown command: %v", action)
+			fmt.Printf("Unknown command: %v\n", action)
+			fmt.Print("Valid commands:\n\trun\n\tleave\n\tdisconnect\n\tget\n\tset %d\n")
 		}
 	}
 	return false

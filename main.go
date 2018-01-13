@@ -48,7 +48,7 @@ MAIN_LOOP:
 			} else if input == "restart" {
 				break
 			} else {
-				fmt.Println("Valid commands: exit restart")
+				fmt.Print("Valid commands:\n\texit\n\trestart\n")
 			}
 		}
 	}
