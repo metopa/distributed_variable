@@ -33,19 +33,32 @@ func (s *LinkedState) DistanceReceived(sender common.PeerAddr, distance int) {
 	updated := false
 	if sender == s.Ctx.LinkedPeers[0] {
 		s.Ctx.LeaderDistance[0] = distance
-		net.SendToHi(s.Ctx, common.NewLeaderDistanceResponseCommand(distance))
+		go net.SendToHi(s.Ctx, common.NewLeaderDistanceResponseCommand(distance))
 		logger.Info("Leader distance updated: %v", s.Ctx.LeaderDistance)
 		updated = true
 	}
 	if sender == s.Ctx.LinkedPeers[1] {
 		s.Ctx.LeaderDistance[1] = distance
-		net.SendToLo(s.Ctx, common.NewLeaderDistanceResponseCommand(distance))
+		go net.SendToLo(s.Ctx, common.NewLeaderDistanceResponseCommand(distance))
 		updated = true
 	}
 	if updated {
 		logger.Info("Leader distance updated: %v", s.Ctx.LeaderDistance)
 	} else {
 		logger.Warn("Distance received from %v, but it's not in linked peers", sender)
+	}
+}
+
+func (s *LinkedState) PeerRemoved(sender common.PeerAddr, removedPeer common.PeerAddr) {
+	logger.Warn("Peer %v removed", removedPeer)
+	fromLo := sender == s.Ctx.LinkedPeers[0]
+	s.Ctx.RemovePeer(removedPeer)
+	logger.Info("Linked peers after remove: %v", s.Ctx.LinkedPeers) //TODO Remove
+
+	if fromLo {
+		net.SendToHi(s.Ctx, common.NewRemovePeerCommand(removedPeer))
+	} else {
+		net.SendToLo(s.Ctx, common.NewRemovePeerCommand(removedPeer))
 	}
 }
 
@@ -74,6 +87,10 @@ func (s *LinkedState) RequestDistancesIfMissing() {
 	}
 }
 func (s *LinkedState) ActionReportPeer(addr common.PeerAddr) {
+	if addr == s.Ctx.Leader {
+		logger.Warn("Reporting peer %v, but it's leader", addr)
+		return
+	}
 	logger.Warn("Reporting peer %v", addr)
 	cmd := common.NewReportPeerCommand(addr)
 	cmd.Destination = s.Ctx.Leader

@@ -9,6 +9,7 @@ const (
 	PEER_INFO_RESPONSE_CMD
 	SET_LEADER_CMD
 	REPORT_PEER_CMD
+	REMOVE_PEER_CMD
 	LEADER_DISTANCE_REQUEST_CMD
 	LEADER_DISTANCE_RESPONSE_CMD
 	SYNC_PEERS_CMD
@@ -27,6 +28,7 @@ var cmdNames = []string{
 	"PEER_INFO_RESPONSE_CMD",
 	"SET_LEADER_CMD",
 	"REPORT_PEER_CMD",
+	"REMOVE_PEER_CMD",
 	"LEADER_DISTANCE_REQUEST_CMD",
 	"LEADER_DISTANCE_RESPONSE_CMD",
 	"SYNC_PEERS_CMD",
@@ -64,6 +66,10 @@ func NewSetLeaderCommand(leader PeerAddr) Command {
 
 func NewReportPeerCommand(peer PeerAddr) Command {
 	return Command{Op: REPORT_PEER_CMD, Sarg: []string{string(peer)}}
+}
+
+func NewRemovePeerCommand(peer PeerAddr) Command {
+	return Command{Op: REMOVE_PEER_CMD, Sarg: []string{string(peer)}}
 }
 
 func NewLeaderDistanceRequestCommand() Command {
@@ -133,6 +139,8 @@ func DispatchCommand(handler CommandHandler, sender PeerAddr, cmd Command) {
 		handler.LeaderChanged(sender, PeerAddr(cmd.Sarg[0]))
 	case REPORT_PEER_CMD:
 		handler.PeerReported(PeerAddr(cmd.Sarg[0]))
+	case REMOVE_PEER_CMD:
+		handler.PeerRemoved(sender, PeerAddr(cmd.Sarg[0]))
 	case LEADER_DISTANCE_REQUEST_CMD:
 		handler.DistanceRequested(sender, cmd.Source)
 	case LEADER_DISTANCE_RESPONSE_CMD:
@@ -153,5 +161,7 @@ func DispatchCommand(handler CommandHandler, sender PeerAddr, cmd Command) {
 		handler.ValueSetRequested(sender, cmd.Source, cmd.Iarg[0])
 	case SET_RESPONSE_CMD:
 		handler.ValueSetConfirmed(sender)
+	default:
+		fmt.Errorf("Unhandled command: %v\n", cmd)
 	}
 }

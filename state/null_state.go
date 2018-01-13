@@ -25,6 +25,9 @@ func (s *NullState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr
 func (s *NullState) PeerReported(reportedPeer common.PeerAddr) {
 	NotHandled()
 }
+func (s *NullState) PeerRemoved(sender common.PeerAddr, reportedPeer common.PeerAddr) {
+	NotHandled()
+}
 func (s *NullState) DistanceRequested(sender common.PeerAddr, source common.PeerAddr) {
 	NotHandled()
 }
