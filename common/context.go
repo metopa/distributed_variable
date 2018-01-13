@@ -30,6 +30,7 @@ func NewContext(name string, sendNumRetries int, sendRetryPause, chRoTimerDur ti
 		SendNumRetries: sendNumRetries,
 		SendRetryPause: sendRetryPause,
 		KnownPeers:     make(map[PeerAddr]PeerInfo),
+		LeaderDistance: [...]int{-1, -1},
 		PeerId:         rand.Int(),
 		ChRoTimerDur:   chRoTimerDur}
 }

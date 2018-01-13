@@ -2,6 +2,7 @@ package state
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/metopa/distributed_variable/common"
 	"github.com/metopa/distributed_variable/logger"
@@ -15,7 +16,12 @@ type LeaderState struct {
 
 func (s *LeaderState) Init() {
 	logger.Info("Current state: LEADER")
-	go net.BroadcastInRing(s.Ctx, common.NewSetLeaderCommand(s.Ctx.Leader))
+	go func(s *LeaderState) {
+		net.BroadcastInRing(s.Ctx, common.NewSetLeaderCommand(s.Ctx.Leader))
+		time.Sleep(time.Second / 4)
+		s.EmitDistanceBroadcast()
+	}(s)
+
 }
 
 func (s *LeaderState) ValueGetRequested(sender common.PeerAddr, source common.PeerAddr) {
@@ -38,6 +44,17 @@ func (s *LeaderState) LeaderChanged(sender common.PeerAddr, leader common.PeerAd
 		//TODO Set Linked state
 		//TODO Send current value
 	}
+}
+
+func (s *LeaderState) DistanceRequested(sender common.PeerAddr, source common.PeerAddr) {
+	s.EmitDistanceBroadcast()
+}
+
+func (s *LeaderState) DistanceReceived(sender common.PeerAddr, distance int) {}
+
+func (s *LeaderState) EmitDistanceBroadcast() {
+	net.SendToHi(s.Ctx, common.NewLeaderDistanceResponseCommand(0))
+	net.SendToLo(s.Ctx, common.NewLeaderDistanceResponseCommand(0))
 }
 
 func (s *LeaderState) Name() string {

@@ -14,73 +14,73 @@ func (s *NullState) Init() {
 	logger.Info("Current state: NULL")
 }
 
-func (h *NullState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
+func (s *NullState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
 	name string, shouldReply bool) {
 	NotHandled()
 }
 
-func (h *NullState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr) {
+func (s *NullState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr) {
 	NotHandled()
 }
-func (h *NullState) LinkedPeersChanged(sender common.PeerAddr,
+func (s *NullState) LinkedPeersChanged(sender common.PeerAddr,
 	loPeer common.PeerAddr, hiPeer common.PeerAddr) {
 	NotHandled()
 }
-func (h *NullState) PeerReported(sender common.PeerAddr, reportedPeer common.PeerAddr) {
+func (s *NullState) PeerReported(sender common.PeerAddr, reportedPeer common.PeerAddr) {
 	NotHandled()
 }
-func (h *NullState) DistanceRequested(sender common.PeerAddr, source common.PeerAddr) {
+func (s *NullState) DistanceRequested(sender common.PeerAddr, source common.PeerAddr) {
 	NotHandled()
 }
-func (h *NullState) DistanceReceived(sender common.PeerAddr, distance int) {
+func (s *NullState) DistanceReceived(sender common.PeerAddr, distance int) {
 	NotHandled()
 }
-func (h *NullState) SyncPeers(sender common.PeerAddr, values []string) {
-	NotHandled()
-}
-
-func (h *NullState) ChRoIdReceived(sender common.PeerAddr, id int) {
+func (s *NullState) SyncPeers(sender common.PeerAddr, values []string) {
 	NotHandled()
 }
 
-func (h *NullState) RingJoinRequested(sender common.PeerAddr, source common.PeerAddr) {
+func (s *NullState) ChRoIdReceived(sender common.PeerAddr, id int) {
 	NotHandled()
 }
-func (h *NullState) RingLeaveAnnounced(sender common.PeerAddr, source common.PeerAddr) {
+
+func (s *NullState) RingJoinRequested(sender common.PeerAddr, source common.PeerAddr) {
 	NotHandled()
 }
-func (h *NullState) ValueGetRequested(sender common.PeerAddr, source common.PeerAddr) {
+func (s *NullState) RingLeaveAnnounced(sender common.PeerAddr, source common.PeerAddr) {
 	NotHandled()
 }
-func (h *NullState) GotValue(sender common.PeerAddr, value int) {
+func (s *NullState) ValueGetRequested(sender common.PeerAddr, source common.PeerAddr) {
 	NotHandled()
 }
-func (h *NullState) ValueSetRequested(sender common.PeerAddr,
+func (s *NullState) GotValue(sender common.PeerAddr, value int) {
+	NotHandled()
+}
+func (s *NullState) ValueSetRequested(sender common.PeerAddr,
 	source common.PeerAddr, value int) {
 	NotHandled()
 }
-func (h *NullState) ValueSetConfirmed(sender common.PeerAddr) {
+func (s *NullState) ValueSetConfirmed(sender common.PeerAddr) {
 	NotHandled()
 }
-func (h *NullState) ActionSetValue(value int) {
+func (s *NullState) ActionSetValue(value int) {
 	NotHandled()
 }
-func (h *NullState) ActionGetValue() {
+func (s *NullState) ActionGetValue() {
 	NotHandled()
 }
-func (h *NullState) ActionStartChRo() {
+func (s *NullState) ActionStartChRo() {
 	NotHandled()
 }
-func (h *NullState) ActionLeave() {
+func (s *NullState) ActionLeave() {
 	NotHandled()
 }
-func (h *NullState) ActionDisconnect() {
+func (s *NullState) ActionDisconnect() {
 	NotHandled()
 }
-func (h *NullState) ActionReconnect() {
+func (s *NullState) ActionReconnect() {
 	NotHandled()
 }
-func (h *NullState) Name() string {
+func (s *NullState) Name() string {
 	return "Null state"
 }
 

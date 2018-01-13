@@ -49,10 +49,7 @@ func (h *DiscoveryState) ChRoIdReceived(sender common.PeerAddr, id int) {
 	} else if id == h.Ctx.PeerId {
 		h.Ctx.Leader = h.Ctx.ServerAddr
 		ls := &LeaderState{DiscoveryState: *h}
-		if h.Ctx.CASState(h, ls) {
-			logger.Info("This peer is ring leader")
-
-		}
+		h.Ctx.CASState(h, ls)
 	}
 }
 
