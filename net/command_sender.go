@@ -92,12 +92,12 @@ func SendToRingLeader(ctx *common.Context, cmd common.Command) {
 
 func ForwardInRing(ctx *common.Context, from common.PeerAddr, cmd common.Command) {
 	if from == ctx.LinkedPeers[0] {
-		SendToHi(ctx, cmd)
+		SendToHiReliable(ctx, cmd)
 	} else if from == ctx.LinkedPeers[1] {
-		SendToLo(ctx, cmd)
+		SendToLoReliable(ctx, cmd)
 	} else {
 		logger.Warn("Tried to forward %v from %v, but linked peers are %v", cmd, from, ctx.LinkedPeers)
-		SendToHi(ctx, cmd)
+		SendToHiReliable(ctx, cmd)
 	}
 }
 
@@ -149,7 +149,7 @@ func sendImpl(cmd *common.Command, ctx *common.Context, destination common.PeerA
 			time.Sleep(ctx.SendRetryPause)
 			continue
 		}
-
+		logger.Info("Sent %v to %v", cmd, destination)
 		return nil
 	}
 

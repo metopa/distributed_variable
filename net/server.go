@@ -88,7 +88,7 @@ func (s *TcpServer) handleConnection(conn *net.TCPConn) {
 	}
 	sender := s.ctx.ResolvePeerName(senderAddr)
 
-	//logger.Info("Session #%v(%v): Received %v[%v]", sessionId, sender, cmd, cmd.Clock.Value  )
+	logger.Info("Session #%v(%v): Received %v[%v]", sessionId, sender, cmd, cmd.Clock.Value  )
 
 	if cmd.Destination != s.ctx.ServerAddr {
 		if cmd.Destination == "BROADCAST" {
