@@ -137,21 +137,24 @@ func sendImpl(cmd *common.Command, ctx *common.Context, destination common.PeerA
 	}
 
 	for i := 0; i < ctx.SendNumRetries; i++ {
-		err = nil
-		conn, err := net.DialTCP("tcp", nil, destAddr)
+		conn, xerr := net.DialTCP("tcp", nil, destAddr)
+		err = xerr
 		if err != nil {
+			logger.Warn("%v: Error: %v", destination, err)
 			time.Sleep(ctx.SendRetryPause)
 			continue
 		}
 		e := json.NewEncoder(conn)
 		err = e.Encode(&cmd)
 		if err != nil {
+			logger.Warn("%v: Error: %v", destination, err)
 			time.Sleep(ctx.SendRetryPause)
 			continue
 		}
 		logger.Info("Sent %v to %v", cmd, destination)
 		return nil
 	}
+	logger.Warn("Exit: Error: %v", err)
 
 	return err
 }
