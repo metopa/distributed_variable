@@ -12,43 +12,46 @@ import (
 const DEFAULT_TTL = 20
 
 func SendToDirectly(ctx *common.Context, destination common.PeerAddr, cmd common.Command) {
-	cmd.From = ctx.ServerAddr
-	cmd.Clock = ctx.Clock
-	if cmd.Source == "" {
-		cmd.Source = ctx.ServerAddr
-	}
-	if cmd.Destination == "" {
-		cmd.Destination = destination
-	}
-	if cmd.Ttl == 0 {
-		cmd.Ttl = DEFAULT_TTL
-	}
-	destAddr, err := net.ResolveTCPAddr("tcp", string(destination))
+	initServiceFields(&cmd, ctx, destination)
+	err := sendImpl(&cmd, ctx, destination)
+	infoStr := common.GetTransmissionInfoString(
+		cmd.Source, ctx.ServerAddr, destination, cmd.Destination)
 	if err != nil {
-		logger.Warn("Can't resolve %v: %v", destination, destAddr)
-		return
+		logger.Warn("Send %v(%v): Error: %v", cmd, infoStr, err)
+	} else {
+		logger.Info("Send %v(%v): OK", cmd, infoStr)
 	}
-	for i := 0; i < ctx.SendNumRetries; i++ {
-		conn, err := net.DialTCP("tcp", nil, destAddr)
-		if err != nil {
-			logger.Warn("Can't dial %v: %v", destination, err)
-			time.Sleep(ctx.SendRetryPause)
-			continue
-		}
-		e := json.NewEncoder(conn)
-		err = e.Encode(&cmd)
-		if err != nil {
-			logger.Warn("Failed to send data to %v: %v", destination, err)
-			time.Sleep(ctx.SendRetryPause)
-			continue
-		}
-		logger.Info("New transmission: %v: %v", cmd,
-			common.GetTransmissionInfoString(
-				cmd.Source, ctx.ServerAddr, destination, cmd.Destination))
+}
+
+func SendToReliable(ctx *common.Context, mainDest common.PeerAddr, altDest common.PeerAddr, cmd common.Command) {
+	initServiceFields(&cmd, ctx, mainDest)
+	err := sendImpl(&cmd, ctx, mainDest)
+	infoStr := common.GetTransmissionInfoString(
+		cmd.Source, ctx.ServerAddr, mainDest, cmd.Destination)
+	if err == nil {
+		logger.Info("Send %v(%v): OK", cmd, infoStr)
 		return
 	}
 
-	logger.Warn("Failed to send data to %v after %v retries", destination, ctx.SendNumRetries)
+	logger.Warn("Send %v(%v): Trying alt link; Error: %v", cmd, infoStr, err)
+
+	if altDest == mainDest || cmd.Destination == mainDest || len(altDest) == 0 {
+		reason := "altDest == mainDest"
+		if cmd.Destination == mainDest {
+			reason = "cmd.Destination == mainDest"
+		} else if len(altDest) == 0 {
+			reason = "len(altDest) == 0"
+		}
+		logger.Warn("Send %v(%v): Alt link unavailable: %v", cmd, infoStr, reason)
+		return
+	}
+	err = sendImpl(&cmd, ctx, altDest)
+	if err != nil {
+		//TODO report peer
+		logger.Warn("Send %v(%v): Alt: Error: %v", cmd, infoStr, err)
+	} else {
+		logger.Info("Send %v(%v): Alt: OK", cmd, infoStr)
+	}
 }
 
 func SendToRingLeader(ctx *common.Context, cmd common.Command) {
@@ -71,13 +74,20 @@ func SendToHi(ctx *common.Context, cmd common.Command) {
 }
 
 func SendToLo(ctx *common.Context, cmd common.Command) {
-	//TODO Send in different direction
 	addr := ctx.LinkedPeers[0]
 	if len(addr) == 0 {
 		logger.Warn("Lo peer is unknown, send canceled")
 	} else {
 		SendToDirectly(ctx, addr, cmd)
 	}
+}
+
+func SendToLoReliable(ctx *common.Context, cmd common.Command) {
+	SendToReliable(ctx, ctx.LinkedPeers[0], ctx.LinkedPeers[1], cmd)
+}
+
+func SendToHiReliable(ctx *common.Context, cmd common.Command) {
+	SendToReliable(ctx, ctx.LinkedPeers[1], ctx.LinkedPeers[0], cmd)
 }
 
 func ForwardInRing(ctx *common.Context, from common.PeerAddr, cmd common.Command) {
@@ -105,4 +115,43 @@ func ReplyInRing(ctx *common.Context, from common.PeerAddr, cmd common.Command) 
 func BroadcastInRing(ctx *common.Context, cmd common.Command) {
 	cmd.Destination = "BROADCAST"
 	SendToHi(ctx, cmd)
+}
+
+func initServiceFields(cmd *common.Command, ctx *common.Context, destination common.PeerAddr) {
+	cmd.From = ctx.ServerAddr
+	cmd.Clock = ctx.Clock
+	if cmd.Source == "" {
+		cmd.Source = ctx.ServerAddr
+	}
+	if cmd.Destination == "" {
+		cmd.Destination = destination
+	}
+	if cmd.Ttl == 0 {
+		cmd.Ttl = DEFAULT_TTL
+	}
+}
+func sendImpl(cmd *common.Command, ctx *common.Context, destination common.PeerAddr) error {
+	destAddr, err := net.ResolveTCPAddr("tcp", string(destination))
+	if err != nil {
+		return err
+	}
+
+	for i := 0; i < ctx.SendNumRetries; i++ {
+		err = nil
+		conn, err := net.DialTCP("tcp", nil, destAddr)
+		if err != nil {
+			time.Sleep(ctx.SendRetryPause)
+			continue
+		}
+		e := json.NewEncoder(conn)
+		err = e.Encode(&cmd)
+		if err != nil {
+			time.Sleep(ctx.SendRetryPause)
+			continue
+		}
+
+		return nil
+	}
+
+	return err
 }
