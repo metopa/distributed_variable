@@ -1,6 +1,8 @@
 package state
 
 import (
+	"time"
+
 	"github.com/metopa/distributed_variable/common"
 	"github.com/metopa/distributed_variable/logger"
 	"github.com/metopa/distributed_variable/net"
@@ -8,7 +10,8 @@ import (
 
 type DiscoveryState struct {
 	NullState
-	Ctx *common.Context
+	Ctx        *common.Context
+	alivePeers []common.PeerAddr
 }
 
 func (s *DiscoveryState) Init() {
@@ -43,6 +46,14 @@ func (h *DiscoveryState) SyncPeers(sender common.PeerAddr, values []string) {
 	net.StartChRoTimer(h.Ctx)
 }
 
+func (h *DiscoveryState) Ping(sender common.PeerAddr, source common.PeerAddr) {
+	net.SendToDirectly(h.Ctx, source, common.NewPongCmd())
+}
+
+func (h *DiscoveryState) Pong(sender common.PeerAddr, source common.PeerAddr) {
+	h.alivePeers = append(h.alivePeers, source)
+}
+
 func (h *DiscoveryState) ChRoIdReceived(sender common.PeerAddr, id int) {
 	if id > h.Ctx.PeerId {
 		net.SendToHi(h.Ctx, common.NewChangRobertIdCmd(id))
@@ -63,7 +74,23 @@ func (h *DiscoveryState) ActionStartChRo() {
 		logger.Info("ChRo has already been started")
 		return
 	}
-	cmd := common.NewSyncPeersCmd(h.Ctx)
+	h.alivePeers = nil
+	for addr := range h.Ctx.KnownPeers {
+		net.SendToDirectly(h.Ctx, addr, common.NewPingCmd())
+	}
+	time.Sleep(h.Ctx.ChRoTimerDur)
+	alivePeers := make(map[common.PeerAddr]common.PeerInfo)
+	h.Ctx.Sync.Lock()
+	for _, addr := range h.alivePeers {
+		info, ok := h.Ctx.KnownPeers[addr]
+		if ok {
+			alivePeers[addr] = info
+		}
+	}
+	h.Ctx.KnownPeers = alivePeers
+	h.Ctx.Sync.Unlock()
+
+	cmd := common.NewSyncPeersCmd(alivePeers)
 	h.Ctx.Sync.Lock()
 	for addr := range h.Ctx.KnownPeers {
 		net.SendToDirectly(h.Ctx, addr, cmd)

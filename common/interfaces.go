@@ -17,6 +17,8 @@ type CommandHandler interface {
 	DistanceRequested(sender PeerAddr, source PeerAddr)
 	DistanceReceived(sender PeerAddr, distance int)
 	SyncPeers(sender PeerAddr, values []string)
+	Ping(sender PeerAddr, source PeerAddr)
+	Pong(sender PeerAddr, source PeerAddr)
 	ChRoIdReceived(sender PeerAddr, id int)
 	RingJoinRequested(sender PeerAddr, source PeerAddr)
 	RingLeaveAnnounced(sender PeerAddr, source PeerAddr)

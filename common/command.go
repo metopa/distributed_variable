@@ -13,6 +13,8 @@ const (
 	LEADER_DISTANCE_REQUEST_CMD
 	LEADER_DISTANCE_RESPONSE_CMD
 	SYNC_PEERS_CMD
+	PING_CMD
+	PONG_CMD
 	CHANG_ROBERTS_ID_CMD
 	JOIN_RING_CMD
 	LEAVE_RING_CMD
@@ -32,6 +34,8 @@ var cmdNames = []string{
 	"LEADER_DISTANCE_REQUEST_CMD",
 	"LEADER_DISTANCE_RESPONSE_CMD",
 	"SYNC_PEERS_CMD",
+	"PING_CMD",
+	"PONG_CMD",
 	"CHANG_ROBERTS_ID_CMD",
 	"JOIN_RING_CMD",
 	"LEAVE_RING_CMD",
@@ -80,14 +84,22 @@ func NewLeaderDistanceResponseCommand(distance int) Command {
 	return Command{Op: LEADER_DISTANCE_RESPONSE_CMD, Iarg: []int{distance}}
 }
 
-func NewSyncPeersCmd(ctx *Context) Command {
+func NewSyncPeersCmd(peers map[PeerAddr]PeerInfo) Command {
 	cmd := Command{Op: SYNC_PEERS_CMD}
-	ctx.Sync.Lock()
-	for _, v := range ctx.KnownPeers {
+
+	for _, v := range peers {
 		cmd.Sarg = append(cmd.Sarg, string(v.Addr), v.Name)
 	}
-	ctx.Sync.Unlock()
+
 	return cmd
+}
+
+func NewPingCmd() Command {
+	return Command{Op: PING_CMD}
+}
+
+func NewPongCmd() Command {
+	return Command{Op: PONG_CMD}
 }
 
 func NewChangRobertIdCmd(id int) Command {
@@ -148,6 +160,10 @@ func DispatchCommand(handler CommandHandler, sender PeerAddr, cmd Command) {
 		handler.DistanceReceived(sender, cmd.Iarg[0])
 	case SYNC_PEERS_CMD:
 		handler.SyncPeers(sender, cmd.Sarg)
+	case PING_CMD:
+		handler.Ping(sender, cmd.Source)
+	case PONG_CMD:
+		handler.Pong(sender, cmd.Source)
 	case CHANG_ROBERTS_ID_CMD:
 		handler.ChRoIdReceived(sender, cmd.Iarg[0])
 	case JOIN_RING_CMD:
