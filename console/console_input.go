@@ -43,6 +43,9 @@ func ListenConsole(ctx *common.Context, stop *chan struct{}) {
 	}
 }
 func handleAction(action string, handler common.ActionHandler) {
+	if action == "" {
+		return
+	}
 	if action == "?" {
 		fmt.Print("Available commands:\n\tstart\n\tget\n\tset %d\n\tleave\n\force-leave\n\treconnect\n")
 	} else if action == "start" {
