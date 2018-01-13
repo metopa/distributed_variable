@@ -21,8 +21,6 @@ func (s *DiscoveryState) Init() {
 func (h *DiscoveryState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
 	name string, shouldReply bool) {
 	h.Ctx.AddNewPeer(name, addr)
-	logger.Info("Added new peer: %v(%v)", name, addr)
-	logger.Info("Linked peers: %v", h.Ctx.LinkedPeers)
 	if shouldReply {
 		net.SendToDirectly(h.Ctx, addr,
 			common.NewPeerInfoResponseCommand(h.Ctx.Name))
@@ -97,13 +95,12 @@ func (h *DiscoveryState) ActionStartChRo() {
 	h.Ctx.Sync.Unlock()
 	alivePeers[h.Ctx.ServerAddr] = common.PeerInfo{Name: h.Ctx.Name, Addr: h.Ctx.ServerAddr}
 	h.Ctx.SetKnownPeers(alivePeers)
-	logger.Info("Ring peers: %v", h.Ctx.KnownPeers)
-	logger.Info("Linked peers: %v", h.Ctx.LinkedPeers)
+
 	if len(alivePeers) == 0 {
 		logger.Warn("No other peers connected, can't build peer ring")
 		return
 	}
-
+	logger.Info("Ring peers: %v", h.alivePeers)
 	cmd := common.NewSyncPeersCmd(alivePeers)
 	h.Ctx.Sync.Lock()
 	for addr := range h.Ctx.KnownPeers {

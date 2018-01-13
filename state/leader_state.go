@@ -32,6 +32,7 @@ func (s *LeaderState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
 		net.SendToDirectly(s.Ctx, addr,
 			common.NewPeerInfoResponseCommand(s.Ctx.Name))
 	}
+	time.Sleep(time.Second / 4)
 	s.EmitDistanceBroadcast()
 }
 
@@ -56,6 +57,10 @@ func (s *LeaderState) LeaderChanged(sender common.PeerAddr, leader common.PeerAd
 		//TODO Set Linked state
 		//TODO Send current value
 	}
+}
+
+func (s *LeaderState)PeerReported(sender common.PeerAddr, reportedPeer common.PeerAddr) {
+	logger.Warn("Peer reported: %v", reportedPeer)
 }
 
 func (s *LeaderState) DistanceRequested(sender common.PeerAddr, source common.PeerAddr) {
