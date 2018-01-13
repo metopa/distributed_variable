@@ -8,7 +8,6 @@ const (
 	PEER_INFO_REQUEST_CMD        = iota
 	PEER_INFO_RESPONSE_CMD
 	SET_LEADER_CMD
-	SET_LINKED_PEERS_CMD
 	REPORT_PEER_CMD
 	LEADER_DISTANCE_REQUEST_CMD
 	LEADER_DISTANCE_RESPONSE_CMD
@@ -16,8 +15,6 @@ const (
 	PING_CMD
 	PONG_CMD
 	CHANG_ROBERTS_ID_CMD
-	JOIN_RING_CMD
-	LEAVE_RING_CMD
 	GET_REQUEST_CMD
 	GET_RESPONSE_CMD
 	SET_REQUEST_CMD
@@ -29,7 +26,6 @@ var cmdNames = []string{
 	"PEER_INFO_REQUEST_CMD",
 	"PEER_INFO_RESPONSE_CMD",
 	"SET_LEADER_CMD",
-	"SET_LINKED_PEERS_CMD",
 	"REPORT_PEER_CMD",
 	"LEADER_DISTANCE_REQUEST_CMD",
 	"LEADER_DISTANCE_RESPONSE_CMD",
@@ -37,8 +33,6 @@ var cmdNames = []string{
 	"PING_CMD",
 	"PONG_CMD",
 	"CHANG_ROBERTS_ID_CMD",
-	"JOIN_RING_CMD",
-	"LEAVE_RING_CMD",
 	"GET_REQUEST_CMD",
 	"GET_RESPONSE_CMD",
 	"SET_REQUEST_CMD",
@@ -66,10 +60,6 @@ func NewPeerInfoResponseCommand(name string) Command {
 
 func NewSetLeaderCommand(leader PeerAddr) Command {
 	return Command{Op: SET_LEADER_CMD, Sarg: []string{string(leader)}}
-}
-
-func NewSetLinkedPeersCommand(loPeer PeerAddr, hiPeer PeerAddr) Command {
-	return Command{Op: SET_LINKED_PEERS_CMD, Sarg: []string{string(loPeer), string(hiPeer)}}
 }
 
 func NewReportPeerCommand(peer PeerAddr) Command {
@@ -104,14 +94,6 @@ func NewPongCmd() Command {
 
 func NewChangRobertIdCmd(id int) Command {
 	return Command{Op: CHANG_ROBERTS_ID_CMD, Iarg: []int{id}}
-}
-
-func NewJoinRingCommand() Command {
-	return Command{Op: JOIN_RING_CMD}
-}
-
-func NewLeaveRingCommand() Command {
-	return Command{Op: LEAVE_RING_CMD}
 }
 
 func NewGetRequestCommand() Command {
@@ -149,9 +131,6 @@ func DispatchCommand(handler CommandHandler, sender PeerAddr, cmd Command) {
 		handler.NewPeer(sender, cmd.Source, cmd.Sarg[0], false)
 	case SET_LEADER_CMD:
 		handler.LeaderChanged(sender, PeerAddr(cmd.Sarg[0]))
-	case SET_LINKED_PEERS_CMD:
-		handler.LinkedPeersChanged(sender,
-			PeerAddr(cmd.Sarg[0]), PeerAddr(cmd.Sarg[1]))
 	case REPORT_PEER_CMD:
 		handler.PeerReported(PeerAddr(cmd.Sarg[0]))
 	case LEADER_DISTANCE_REQUEST_CMD:
@@ -166,10 +145,6 @@ func DispatchCommand(handler CommandHandler, sender PeerAddr, cmd Command) {
 		handler.Pong(sender, cmd.Source)
 	case CHANG_ROBERTS_ID_CMD:
 		handler.ChRoIdReceived(sender, cmd.Iarg[0])
-	case JOIN_RING_CMD:
-		handler.RingJoinRequested(sender, cmd.Source)
-	case LEAVE_RING_CMD:
-		handler.RingLeaveAnnounced(sender, cmd.Source)
 	case GET_REQUEST_CMD:
 		handler.ValueGetRequested(sender, cmd.Source)
 	case GET_RESPONSE_CMD:

@@ -13,7 +13,7 @@ type ActionHandler interface {
 type CommandHandler interface {
 	NewPeer(sender PeerAddr, addr PeerAddr, name string, shouldReply bool)
 	LeaderChanged(sender PeerAddr, leader PeerAddr)
-	LinkedPeersChanged(sender PeerAddr, loPeer PeerAddr, hiPeer PeerAddr)
+
 	PeerReported(reportedPeer PeerAddr)
 	DistanceRequested(sender PeerAddr, source PeerAddr)
 	DistanceReceived(sender PeerAddr, distance int)
@@ -21,8 +21,7 @@ type CommandHandler interface {
 	Ping(sender PeerAddr, source PeerAddr)
 	Pong(sender PeerAddr, source PeerAddr)
 	ChRoIdReceived(sender PeerAddr, id int)
-	RingJoinRequested(sender PeerAddr, source PeerAddr)
-	RingLeaveAnnounced(sender PeerAddr, source PeerAddr)
+
 	ValueGetRequested(sender PeerAddr, source PeerAddr)
 	GotValue(sender PeerAddr, value int)
 	ValueSetRequested(sender PeerAddr, source PeerAddr, value int)

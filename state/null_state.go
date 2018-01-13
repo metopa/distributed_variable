@@ -22,10 +22,6 @@ func (s *NullState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
 func (s *NullState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr) {
 	NotHandled()
 }
-func (s *NullState) LinkedPeersChanged(sender common.PeerAddr,
-	loPeer common.PeerAddr, hiPeer common.PeerAddr) {
-	NotHandled()
-}
 func (s *NullState) PeerReported(reportedPeer common.PeerAddr) {
 	NotHandled()
 }
@@ -43,12 +39,6 @@ func (s *NullState) ChRoIdReceived(sender common.PeerAddr, id int) {
 	NotHandled()
 }
 
-func (s *NullState) RingJoinRequested(sender common.PeerAddr, source common.PeerAddr) {
-	NotHandled()
-}
-func (s *NullState) RingLeaveAnnounced(sender common.PeerAddr, source common.PeerAddr) {
-	NotHandled()
-}
 func (s *NullState) ValueGetRequested(sender common.PeerAddr, source common.PeerAddr) {
 	NotHandled()
 }
