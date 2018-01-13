@@ -14,7 +14,7 @@ type CommandHandler interface {
 	NewPeer(sender PeerAddr, addr PeerAddr, name string, shouldReply bool)
 	LeaderChanged(sender PeerAddr, leader PeerAddr)
 	LinkedPeersChanged(sender PeerAddr, loPeer PeerAddr, hiPeer PeerAddr)
-	PeerReported(sender PeerAddr, reportedPeer PeerAddr)
+	PeerReported(reportedPeer PeerAddr)
 	DistanceRequested(sender PeerAddr, source PeerAddr)
 	DistanceReceived(sender PeerAddr, distance int)
 	SyncPeers(sender PeerAddr, values []string)

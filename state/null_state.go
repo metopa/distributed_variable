@@ -26,7 +26,7 @@ func (s *NullState) LinkedPeersChanged(sender common.PeerAddr,
 	loPeer common.PeerAddr, hiPeer common.PeerAddr) {
 	NotHandled()
 }
-func (s *NullState) PeerReported(sender common.PeerAddr, reportedPeer common.PeerAddr) {
+func (s *NullState) PeerReported(reportedPeer common.PeerAddr) {
 	NotHandled()
 }
 func (s *NullState) DistanceRequested(sender common.PeerAddr, source common.PeerAddr) {

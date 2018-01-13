@@ -153,7 +153,7 @@ func DispatchCommand(handler CommandHandler, sender PeerAddr, cmd Command) {
 		handler.LinkedPeersChanged(sender,
 			PeerAddr(cmd.Sarg[0]), PeerAddr(cmd.Sarg[1]))
 	case REPORT_PEER_CMD:
-		handler.PeerReported(sender, PeerAddr(cmd.Sarg[0]))
+		handler.PeerReported(PeerAddr(cmd.Sarg[0]))
 	case LEADER_DISTANCE_REQUEST_CMD:
 		handler.DistanceRequested(sender, cmd.Source)
 	case LEADER_DISTANCE_RESPONSE_CMD:
