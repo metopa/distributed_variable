@@ -1,7 +1,6 @@
 package common
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -53,12 +52,12 @@ type Command struct {
 	Clock       LamportClock
 }
 
-func NewPeerInfoRequestCommand(name string) Command {
-	return Command{Op: PEER_INFO_REQUEST_CMD, Sarg: []string{name}}
+func NewPeerInfoRequestCommand(name string, leader PeerAddr) Command {
+	return Command{Op: PEER_INFO_REQUEST_CMD, Sarg: []string{name, string(leader)}}
 }
 
-func NewPeerInfoResponseCommand(name string, leader PeerAddr) Command {
-	return Command{Op: PEER_INFO_RESPONSE_CMD, Sarg: []string{name, string(leader)}}
+func NewPeerInfoResponseCommand(name string) Command {
+	return Command{Op: PEER_INFO_RESPONSE_CMD, Sarg: []string{name}}
 }
 
 func NewSetLeaderCommand(leader PeerAddr) Command {
@@ -131,13 +130,11 @@ func DispatchCommand(handler CommandHandler, sender PeerAddr, cmd Command) {
 	switch cmd.Op {
 	case PEER_INFO_REQUEST_CMD:
 		handler.NewPeer(sender, cmd.Source, cmd.Sarg[0], true)
-	case PEER_INFO_RESPONSE_CMD:
-		handler.NewPeer(sender, cmd.Source, cmd.Sarg[0], false)
-		js, _ := json.MarshalIndent(&cmd, ":", "  ")
-		fmt.Println(string(js))
 		if cmd.Sarg[1] != "" {
 			handler.LeaderChanged(sender, PeerAddr(cmd.Sarg[1]))
 		}
+	case PEER_INFO_RESPONSE_CMD:
+		handler.NewPeer(sender, cmd.Source, cmd.Sarg[0], false)
 	case SET_LEADER_CMD:
 		handler.LeaderChanged(sender, PeerAddr(cmd.Sarg[0]))
 	case SET_LINKED_PEERS_CMD:

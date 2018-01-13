@@ -22,7 +22,7 @@ func (h *DiscoveryState) NewPeer(sender common.PeerAddr, addr common.PeerAddr,
 	logger.Info("Linked peers: %v", h.Ctx.LinkedPeers)
 	if shouldReply {
 		net.SendToDirectly(h.Ctx, addr,
-			common.NewPeerInfoResponseCommand(h.Ctx.Name, h.Ctx.Leader))
+			common.NewPeerInfoResponseCommand(h.Ctx.Name))
 	}
 }
 

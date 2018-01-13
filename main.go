@@ -49,9 +49,9 @@ func main() {
 
 	discoveryServer := dv_net.NewDiscoveryServer(string(ctx.ServerAddr),
 		func(response string) {
-			logger.Info("New discovery response from %v", response)
+			logger.Info("New discovery request from %v", response)
 			dv_net.SendToDirectly(ctx, common.PeerAddr(response),
-				common.NewPeerInfoRequestCommand(ctx.Name))
+				common.NewPeerInfoRequestCommand(ctx.Name, ctx.Leader))
 		})
 	discoveryServer.StartOn(iface)
 	discoveryServer.SendDiscoveryRequestOn(iface)
