@@ -15,10 +15,14 @@ type Logger struct {
 	ctx   *common.Context
 }
 
-var defaultLogger = Logger{
-	info:  log.New(os.Stdout, "INFO  ", log.Ltime|log.Lmicroseconds),
-	warn:  log.New(os.Stdout, "WARN  ", log.Ltime|log.Lmicroseconds),
-	fatal: log.New(os.Stdout, "FATAL ", log.Ltime|log.Lmicroseconds|log.Lshortfile)}
+var defaultLogger *Logger
+
+func initDefaultLogger() {
+	defaultLogger = &Logger{
+		info:  log.New(os.Stdout, "INFO  ", log.Ltime|log.Lmicroseconds),
+		warn:  log.New(os.Stdout, "WARN  ", log.Ltime|log.Lmicroseconds),
+		fatal: log.New(os.Stdout, "FATAL ", log.Ltime|log.Lmicroseconds|log.Lshortfile)}
+}
 
 func (l *Logger) Info(format string, v ...interface{}) {
 	l.output(l.info, format, v...)
@@ -44,17 +48,29 @@ func (l *Logger) output(stream *log.Logger, format string, v ...interface{}) {
 }
 
 func Info(format string, v ...interface{}) {
+	if defaultLogger == nil {
+		initDefaultLogger()
+	}
 	defaultLogger.Info(format, v...)
 }
 
 func Warn(format string, v ...interface{}) {
+	if defaultLogger == nil {
+		initDefaultLogger()
+	}
 	defaultLogger.Warn(format, v...)
 }
 
 func Fatal(format string, v ...interface{}) {
+	if defaultLogger == nil {
+		initDefaultLogger()
+	}
 	defaultLogger.Fatal(format, v...)
 }
 
 func SetContext(ctx *common.Context) {
+	if defaultLogger == nil {
+		initDefaultLogger()
+	}
 	defaultLogger.ctx = ctx
 }

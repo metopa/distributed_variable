@@ -26,14 +26,25 @@ func main() {
 	flag.Parse()
 
 	if *ifaceName == "" {
-		logger.Fatal("Usage: %s -if <%s>", flag.Arg(0), ifaceNames)
+		fmt.Errorf("Usage: %s -if <%s>\n", flag.Arg(0), ifaceNames)
+		os.Exit(-1)
 	}
 
 	iface, err := net.InterfaceByName(*ifaceName)
 	if err != nil {
-		logger.Fatal("%v", err)
+		fmt.Errorf("Can't find interface: %v\n", err)
+		os.Exit(-1)
 	}
 	rand.Seed(time.Now().UnixNano())
+	logFile := fmt.Sprintf("DV_%v.log",
+		strings.Replace(time.Now().Format(time.Stamp), " ", "_", -1))
+	tee, err := common.NewTee(logFile)
+	if err != nil {
+		fmt.Errorf("Can't redirect log to file: %v\n", err)
+		os.Exit(-1)
+	}
+	defer tee.Close()
+	logger.Info("Log file: %v", logFile)
 	stdInChan := make(chan string)
 	go stdInStream(stdInChan)
 
@@ -53,7 +64,7 @@ MAIN_LOOP:
 		}
 	}
 	fmt.Println("Terminating...")
-	time.Sleep(time.Second * 2)
+	time.Sleep(time.Second)
 	fmt.Println("Terminated")
 }
 
