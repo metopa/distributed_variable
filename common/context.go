@@ -74,9 +74,46 @@ func (ctx *Context) ResolvePeerName(addr PeerAddr) string {
 
 func (ctx *Context) SetKnownPeers(peers map[PeerAddr]PeerInfo) {
 	ctx.KnownPeers = make(map[PeerAddr]PeerInfo)
+	ctx.LinkedPeers[0] = ""
+	ctx.LinkedPeers[1] = ""
 	for _, v := range peers {
 		ctx.AddNewPeer(v.Name, v.Addr)
 	}
+}
+
+func (ctx *Context) RemovePeer(addr PeerAddr) {
+	ctx.Sync.Lock()
+	delete(ctx.KnownPeers, addr)
+	ctx.Sync.Unlock()
+	ctx.UpdateLinkedPeers()
+}
+
+func (ctx *Context) UpdateLinkedPeers() {
+	var lo, hi, min, max PeerAddr
+	ctx.Sync.Lock()
+	for k, _ := range ctx.KnownPeers {
+		if len(min) == 0 || k < min {
+			min = k
+		}
+		if len(min) == 0 || k > min {
+			min = k
+		}
+		if k < ctx.ServerAddr && (len(lo) == 0 || lo < k) {
+			lo = k
+		}
+		if k > ctx.ServerAddr && (len(hi) == 0 || k < hi) {
+			hi = k
+		}
+	}
+	if len(lo) == 0 {
+		lo = max
+	}
+	if len(hi) == 0 {
+		hi = min
+	}
+	ctx.LinkedPeers[0] = lo
+	ctx.LinkedPeers[1] = hi
+	ctx.Sync.Unlock()
 }
 
 func (ctx *Context) CASState(current, new State) bool {
