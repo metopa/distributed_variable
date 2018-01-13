@@ -21,6 +21,7 @@ type Context struct {
 	StateSync        sync.Mutex
 	Sync             sync.Mutex
 	StartedChRoTimer int32
+	Clock     		 LamportClock
 }
 
 func NewContext(name string, sendNumRetries int, sendRetryPause, chRoTimerDur time.Duration) *Context {

@@ -11,14 +11,15 @@ import (
 
 const DEFAULT_TTL = 20
 
-func SendToDirectly(ctx *common.Context, destination common.PeerAddr, cmd common.TcpCommand) {
+func SendToDirectly(ctx *common.Context, destination common.PeerAddr, cmd common.Command) {
+	cmd.From = ctx.ServerAddr
+	cmd.Clock = ctx.Clock
 	if cmd.Source == "" {
 		cmd.Source = ctx.ServerAddr
 	}
 	if cmd.Destination == "" {
 		cmd.Destination = destination
 	}
-	cmd.From = ctx.ServerAddr
 	if cmd.Ttl == 0 {
 		cmd.Ttl = DEFAULT_TTL
 	}
@@ -50,13 +51,13 @@ func SendToDirectly(ctx *common.Context, destination common.PeerAddr, cmd common
 	logger.Warn("Failed to send data to %v after %v retries", destination, ctx.SendNumRetries)
 }
 
-func SendToRingLeader(ctx *common.Context, cmd common.TcpCommand) {
+func SendToRingLeader(ctx *common.Context, cmd common.Command) {
 	cmd.Destination = ctx.Leader
 	//TODO Choose direction basing on leader distance
 	SendToHi(ctx, cmd)
 }
 
-func SendToHi(ctx *common.Context, cmd common.TcpCommand) {
+func SendToHi(ctx *common.Context, cmd common.Command) {
 	addr := ctx.LinkedPeers[1]
 	if len(addr) == 0 {
 		logger.Warn("Hi peer is unknown, send canceled")
@@ -65,7 +66,7 @@ func SendToHi(ctx *common.Context, cmd common.TcpCommand) {
 	}
 }
 
-func SendToLo(ctx *common.Context, cmd common.TcpCommand) {
+func SendToLo(ctx *common.Context, cmd common.Command) {
 	//TODO Send in different direction
 	addr := ctx.LinkedPeers[0]
 	if len(addr) == 0 {
@@ -75,7 +76,7 @@ func SendToLo(ctx *common.Context, cmd common.TcpCommand) {
 	}
 }
 
-func ForwardInRing(ctx *common.Context, from common.PeerAddr, cmd common.TcpCommand) {
+func ForwardInRing(ctx *common.Context, from common.PeerAddr, cmd common.Command) {
 	if from == ctx.LinkedPeers[0] {
 		SendToHi(ctx, cmd)
 	} else if from == ctx.LinkedPeers[1] {
@@ -86,7 +87,7 @@ func ForwardInRing(ctx *common.Context, from common.PeerAddr, cmd common.TcpComm
 	}
 }
 
-func ReplyInRing(ctx *common.Context, from common.PeerAddr, cmd common.TcpCommand) {
+func ReplyInRing(ctx *common.Context, from common.PeerAddr, cmd common.Command) {
 	if from == ctx.LinkedPeers[0] {
 		SendToLo(ctx, cmd)
 	} else if from == ctx.LinkedPeers[1] {
@@ -97,7 +98,7 @@ func ReplyInRing(ctx *common.Context, from common.PeerAddr, cmd common.TcpComman
 	}
 }
 
-func BroadcastInRing(ctx *common.Context, cmd common.TcpCommand) {
+func BroadcastInRing(ctx *common.Context, cmd common.Command) {
 	cmd.Destination = "BROADCAST"
 	SendToHi(ctx, cmd)
 }

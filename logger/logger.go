@@ -12,6 +12,7 @@ type Logger struct {
 	info  *log.Logger
 	warn  *log.Logger
 	fatal *log.Logger
+	ctx   *common.Context
 }
 
 var defaultLogger = Logger{
@@ -33,8 +34,13 @@ func (l *Logger) Fatal(format string, v ...interface{}) {
 }
 
 func (l *Logger) output(stream *log.Logger, format string, v ...interface{}) {
-	stream.Output(4, fmt.Sprintf("%v "+format,
-		append([]interface{}{common.PeekLogicalTimestamp()}, v...)...))
+	if l.ctx != nil {
+		stream.Output(4, fmt.Sprintf("%v "+format,
+			append([]interface{}{l.ctx.Clock}, v...)...))
+	} else {
+		stream.Output(4, fmt.Sprintf("%v "+format,
+			append([]interface{}{nil}, v...)...))
+	}
 }
 
 func Info(format string, v ...interface{}) {
@@ -47,4 +53,8 @@ func Warn(format string, v ...interface{}) {
 
 func Fatal(format string, v ...interface{}) {
 	defaultLogger.Fatal(format, v...)
+}
+
+func SetContext(ctx *common.Context) {
+	defaultLogger.ctx = ctx
 }

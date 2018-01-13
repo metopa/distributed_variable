@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	PEER_INFO_REQUEST_CMD = iota
+	PEER_INFO_REQUEST_CMD        = iota
 	PEER_INFO_RESPONSE_CMD
 	SET_LEADER_CMD
 	SET_LINKED_PEERS_CMD
@@ -41,46 +41,47 @@ var cmdNames = []string{
 	"SET_RESPONSE_CMD",
 }
 
-type TcpCommand struct {
+type Command struct {
 	Op          int
 	Sarg        []string
 	Iarg        []int
 	Source      PeerAddr
 	Destination PeerAddr
-	From 		PeerAddr
+	From        PeerAddr
 	Ttl         int
+	Clock       LamportClock
 }
 
-func NewPeerInfoRequestCommand(name string) TcpCommand {
-	return TcpCommand{Op: PEER_INFO_REQUEST_CMD, Sarg: []string{name}}
+func NewPeerInfoRequestCommand(name string) Command {
+	return Command{Op: PEER_INFO_REQUEST_CMD, Sarg: []string{name}}
 }
 
-func NewPeerInfoResponseCommand(name string, leader PeerAddr) TcpCommand {
-	return TcpCommand{Op: PEER_INFO_RESPONSE_CMD, Sarg: []string{name, string(leader)}}
+func NewPeerInfoResponseCommand(name string, leader PeerAddr) Command {
+	return Command{Op: PEER_INFO_RESPONSE_CMD, Sarg: []string{name, string(leader)}}
 }
 
-func NewSetLeaderCommand(leader PeerAddr) TcpCommand {
-	return TcpCommand{Op: SET_LEADER_CMD, Sarg: []string{string(leader)}}
+func NewSetLeaderCommand(leader PeerAddr) Command {
+	return Command{Op: SET_LEADER_CMD, Sarg: []string{string(leader)}}
 }
 
-func NewSetLinkedPeersCommand(loPeer PeerAddr, hiPeer PeerAddr) TcpCommand {
-	return TcpCommand{Op: SET_LINKED_PEERS_CMD, Sarg: []string{string(loPeer), string(hiPeer)}}
+func NewSetLinkedPeersCommand(loPeer PeerAddr, hiPeer PeerAddr) Command {
+	return Command{Op: SET_LINKED_PEERS_CMD, Sarg: []string{string(loPeer), string(hiPeer)}}
 }
 
-func NewReportPeerCommand(peer PeerAddr) TcpCommand {
-	return TcpCommand{Op: REPORT_PEER_CMD, Sarg: []string{string(peer)}}
+func NewReportPeerCommand(peer PeerAddr) Command {
+	return Command{Op: REPORT_PEER_CMD, Sarg: []string{string(peer)}}
 }
 
-func NewLeaderDistanceRequestCommand() TcpCommand {
-	return TcpCommand{Op: LEADER_DISTANCE_REQUEST_CMD}
+func NewLeaderDistanceRequestCommand() Command {
+	return Command{Op: LEADER_DISTANCE_REQUEST_CMD}
 }
 
-func NewLeaderDistanceResponseCommand(distance int) TcpCommand {
-	return TcpCommand{Op: LEADER_DISTANCE_RESPONSE_CMD, Iarg: []int{distance}}
+func NewLeaderDistanceResponseCommand(distance int) Command {
+	return Command{Op: LEADER_DISTANCE_RESPONSE_CMD, Iarg: []int{distance}}
 }
 
-func NewSyncPeersCmd(ctx *Context) TcpCommand {
-	cmd := TcpCommand{Op: SYNC_PEERS_CMD}
+func NewSyncPeersCmd(ctx *Context) Command {
+	cmd := Command{Op: SYNC_PEERS_CMD}
 	ctx.Sync.Lock()
 	for _, v := range ctx.KnownPeers {
 		cmd.Sarg = append(cmd.Sarg, string(v.Addr), v.Name)
@@ -89,36 +90,35 @@ func NewSyncPeersCmd(ctx *Context) TcpCommand {
 	return cmd
 }
 
-func NewChangRobertIdCmd(id int) TcpCommand {
-	return TcpCommand{Op: CHANG_ROBERTS_ID_CMD, Iarg: []int{id}}
+func NewChangRobertIdCmd(id int) Command {
+	return Command{Op: CHANG_ROBERTS_ID_CMD, Iarg: []int{id}}
 }
 
-func NewJoinRingCommand() TcpCommand {
-	return TcpCommand{Op: JOIN_RING_CMD}
+func NewJoinRingCommand() Command {
+	return Command{Op: JOIN_RING_CMD}
 }
 
-func NewLeaveRingCommand() TcpCommand {
-	return TcpCommand{Op: LEAVE_RING_CMD}
+func NewLeaveRingCommand() Command {
+	return Command{Op: LEAVE_RING_CMD}
 }
 
-func NewGetRequestCommand() TcpCommand {
-	return TcpCommand{Op: GET_REQUEST_CMD}
+func NewGetRequestCommand() Command {
+	return Command{Op: GET_REQUEST_CMD}
 }
 
-func NewGetResponseCommand(value int) TcpCommand {
-	return TcpCommand{Op: GET_RESPONSE_CMD, Iarg: []int{value}}
+func NewGetResponseCommand(value int) Command {
+	return Command{Op: GET_RESPONSE_CMD, Iarg: []int{value}}
 }
 
-func NewSetRequestCommand(value int) TcpCommand {
-	return TcpCommand{Op: SET_REQUEST_CMD, Iarg: []int{value}}
+func NewSetRequestCommand(value int) Command {
+	return Command{Op: SET_REQUEST_CMD, Iarg: []int{value}}
 }
 
-func NewSetResponseCommand() TcpCommand {
-	return TcpCommand{Op: SET_RESPONSE_CMD}
+func NewSetResponseCommand() Command {
+	return Command{Op: SET_RESPONSE_CMD}
 }
 
-
-func (cmd TcpCommand) String() string {
+func (cmd Command) String() string {
 	if cmd.Op >= 0 && cmd.Op < MAX_CMD {
 		return fmt.Sprintf("{%s}", cmdNames[cmd.Op])
 	} else {
@@ -126,7 +126,7 @@ func (cmd TcpCommand) String() string {
 	}
 }
 
-func DispatchCommand(handler CommandHandler, sender PeerAddr, cmd TcpCommand) {
+func DispatchCommand(handler CommandHandler, sender PeerAddr, cmd Command) {
 	switch cmd.Op {
 	case PEER_INFO_REQUEST_CMD:
 		handler.NewPeer(sender, cmd.Source, cmd.Sarg[0], true)

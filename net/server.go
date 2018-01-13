@@ -72,13 +72,22 @@ func (s *TcpServer) accept() {
 func (s *TcpServer) handleConnection(conn *net.TCPConn) {
 	sessionId := atomic.AddUint64(&localSessionIdCounter, 1)
 	cmd, err := decodeCommand(conn)
-	senderAddr := cmd.From
-	sender := s.ctx.ResolvePeerName(senderAddr)
 	conn.Close()
 	if err != nil {
-		logger.Warn("Session #%v(%v): Error: %v", sessionId, sender, err)
+		logger.Warn("Session #%v(%v): Error: %v",
+			sessionId, conn.RemoteAddr().String(), err)
 		return
 	}
+
+	s.ctx.Clock.SyncAfter(cmd.Clock)
+
+	senderAddr := cmd.From
+	if senderAddr == "" {
+		logger.Warn("Session #%v(%v): field FROM is empty",
+			sessionId, conn.RemoteAddr().String())
+	}
+	sender := s.ctx.ResolvePeerName(senderAddr)
+
 	logger.Info("Session #%v(%v): Received %v", sessionId, sender, cmd)
 
 	if cmd.Destination != s.ctx.ServerAddr {
@@ -105,10 +114,10 @@ func (s *TcpServer) handleConnection(conn *net.TCPConn) {
 	}
 }
 
-func decodeCommand(conn *net.TCPConn) (common.TcpCommand, error) {
+func decodeCommand(conn *net.TCPConn) (common.Command, error) {
 	conn.SetDeadline(time.Now().Add(time.Second * 15))
 	d := json.NewDecoder(conn)
-	var cmd common.TcpCommand
+	var cmd common.Command
 	err := d.Decode(&cmd)
 	return cmd, err
 }

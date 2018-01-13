@@ -5,20 +5,18 @@ import (
 	"sync/atomic"
 )
 
-type LogicalTimestamp struct {
+type LamportClock struct {
 	value uint64
 }
 
-var logicalTimestamp = LogicalTimestamp{value: 0}
-
-func PeekLogicalTimestamp() LogicalTimestamp {
-	return logicalTimestamp
+func (l LamportClock) String() string {
+	return fmt.Sprintf("[%4d]", uint64(l.value))
 }
 
-func AdvanceLogicalTimestamp() LogicalTimestamp {
-	return LogicalTimestamp{atomic.AddUint64(&(logicalTimestamp.value), 1)}
-}
+func (l *LamportClock) SyncAfter(remoteClock LamportClock) {
+	new := remoteClock.value + 1
 
-func (l *LogicalTimestamp) String() string {
-	return fmt.Sprintf("[%10d]", l.value)
+	for old := l.value; old < new; old = l.value {
+		atomic.CompareAndSwapUint64(&(l.value), old, new)
+	}
 }
