@@ -46,6 +46,8 @@ func (h *DiscoveryState) SyncPeers(sender common.PeerAddr, values []string) {
 			Name: values[i+1], Addr: common.PeerAddr(values[i])}
 	}
 	h.Ctx.SetKnownPeers(peers)
+	logger.Info("Ring peers: %v", h.Ctx.KnownPeers)
+	logger.Info("Linked peers: %v", h.Ctx.LinkedPeers)
 	net.StartChRoTimer(h.Ctx)
 }
 
@@ -92,12 +94,13 @@ func (h *DiscoveryState) ActionStartChRo() {
 	}
 	h.Ctx.Sync.Unlock()
 	h.Ctx.SetKnownPeers(alivePeers)
-
+	logger.Info("Ring peers: %v", h.Ctx.KnownPeers)
+	logger.Info("Linked peers: %v", h.Ctx.LinkedPeers)
 	if len(alivePeers) == 0 {
 		logger.Warn("No other peers connected, can't build peer ring")
 		return
 	}
-	logger.Info("Ring peers: %v", h.alivePeers)
+
 
 	cmd := common.NewSyncPeersCmd(alivePeers)
 	h.Ctx.Sync.Lock()
