@@ -25,13 +25,13 @@ func (s *NullState) LeaderChanged(sender common.PeerAddr, leader common.PeerAddr
 func (s *NullState) PeerReported(reportedPeer common.PeerAddr) {
 	NotHandled()
 }
-func (s *NullState) PeerRemoved(sender common.PeerAddr, reportedPeer common.PeerAddr) {
+func (s *NullState) PeerRemoved(sender common.PeerAddr, reportedPeer common.PeerAddr, direction int) {
 	NotHandled()
 }
 func (s *NullState) DistanceRequested(sender common.PeerAddr, source common.PeerAddr) {
 	NotHandled()
 }
-func (s *NullState) DistanceReceived(sender common.PeerAddr, distance int) {
+func (s *NullState) DistanceReceived(sender common.PeerAddr, distance int, direction int) {
 	NotHandled()
 }
 func (s *NullState) SyncPeers(sender common.PeerAddr, values []string) {

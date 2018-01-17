@@ -49,7 +49,7 @@ func (h *DiscoveryState) SyncPeers(sender common.PeerAddr, values []string) {
 	net.StartChRoTimer(h.Ctx)
 }
 
-func (s *DiscoveryState) PeerRemoved(sender common.PeerAddr, removedPeer common.PeerAddr) {
+func (s *DiscoveryState) PeerRemoved(sender common.PeerAddr, removedPeer common.PeerAddr, direction int) {
 	logger.Warn("Peer %v removed", removedPeer)
 
 	s.Ctx.RemovePeer(removedPeer)
@@ -116,7 +116,7 @@ func (h *DiscoveryState) ActionStartChRo() {
 }
 
 func (s *DiscoveryState) ActionLeave() bool {
-	cmd := common.NewRemovePeerCommand(s.Ctx.ServerAddr)
+	cmd := common.NewRemovePeerCommand(s.Ctx.ServerAddr, 0)
 	s.Ctx.Sync.Lock()
 	for addr, _ := range s.Ctx.KnownPeers {
 		go net.SendToDirectly(s.Ctx, addr, cmd)

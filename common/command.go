@@ -68,16 +68,16 @@ func NewReportPeerCommand(peer PeerAddr) Command {
 	return Command{Op: REPORT_PEER_CMD, Sarg: []string{string(peer)}}
 }
 
-func NewRemovePeerCommand(peer PeerAddr) Command {
-	return Command{Op: REMOVE_PEER_CMD, Sarg: []string{string(peer)}}
+func NewRemovePeerCommand(peer PeerAddr, direction int) Command {
+	return Command{Op: REMOVE_PEER_CMD, Sarg: []string{string(peer)}, Iarg: []int{direction}}
 }
 
 func NewLeaderDistanceRequestCommand() Command {
 	return Command{Op: LEADER_DISTANCE_REQUEST_CMD}
 }
 
-func NewLeaderDistanceResponseCommand(distance int) Command {
-	return Command{Op: LEADER_DISTANCE_RESPONSE_CMD, Iarg: []int{distance}}
+func NewLeaderDistanceResponseCommand(distance int, direction int) Command {
+	return Command{Op: LEADER_DISTANCE_RESPONSE_CMD, Iarg: []int{distance, direction}}
 }
 
 func NewSyncPeersCmd(peers map[PeerAddr]PeerInfo) Command {
@@ -140,11 +140,11 @@ func DispatchCommand(handler CommandHandler, sender PeerAddr, cmd Command) {
 	case REPORT_PEER_CMD:
 		handler.PeerReported(PeerAddr(cmd.Sarg[0]))
 	case REMOVE_PEER_CMD:
-		handler.PeerRemoved(sender, PeerAddr(cmd.Sarg[0]))
+		handler.PeerRemoved(sender, PeerAddr(cmd.Sarg[0]), cmd.Iarg[0])
 	case LEADER_DISTANCE_REQUEST_CMD:
 		handler.DistanceRequested(sender, cmd.Source)
 	case LEADER_DISTANCE_RESPONSE_CMD:
-		handler.DistanceReceived(sender, cmd.Iarg[0])
+		handler.DistanceReceived(sender, cmd.Iarg[0], cmd.Iarg[1])
 	case SYNC_PEERS_CMD:
 		handler.SyncPeers(sender, cmd.Sarg)
 	case PING_CMD:

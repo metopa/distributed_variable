@@ -16,9 +16,9 @@ type CommandHandler interface {
 	LeaderChanged(sender PeerAddr, leader PeerAddr, value int)
 
 	PeerReported(reportedPeer PeerAddr)
-	PeerRemoved(sender PeerAddr, reportedPeer PeerAddr)
+	PeerRemoved(sender PeerAddr, reportedPeer PeerAddr, direction int)
 	DistanceRequested(sender PeerAddr, source PeerAddr)
-	DistanceReceived(sender PeerAddr, distance int)
+	DistanceReceived(sender PeerAddr, distance int, direction int)
 	SyncPeers(sender PeerAddr, values []string)
 	Ping(sender PeerAddr, source PeerAddr)
 	Pong(sender PeerAddr, source PeerAddr)
