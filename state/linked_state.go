@@ -56,10 +56,9 @@ func (s *LinkedState) DistanceReceived(sender common.PeerAddr, distance int) {
 
 func (s *LinkedState) PeerRemoved(sender common.PeerAddr, removedPeer common.PeerAddr) {
 	logger.Warn("Peer %v removed", removedPeer)
-	fromLo := sender == s.Ctx.LinkedPeers[0]
 	s.Ctx.RemovePeer(removedPeer)
 
-	if fromLo {
+	if sender == s.Ctx.LinkedPeers[0] {
 		net.SendToHi(s.Ctx, common.NewRemovePeerCommand(removedPeer), true)
 	} else {
 		net.SendToLo(s.Ctx, common.NewRemovePeerCommand(removedPeer), true)
