@@ -63,6 +63,7 @@ func (s *TcpServer) accept() {
 		}
 		go s.handleConnection(conn)
 	}
+	s.listener.Close()
 	logger.Info("Stopped main server")
 }
 
