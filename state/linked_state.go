@@ -34,23 +34,18 @@ func (s *LinkedState) LeaderChanged(sender common.PeerAddr, leader common.PeerAd
 
 func (s *LinkedState) DistanceReceived(sender common.PeerAddr, distance int, direction int) {
 	distance++
-	updated := false
 	prevDistances := s.Ctx.LeaderDistance
+
 	if direction == 1 {
 		s.Ctx.LeaderDistance[0] = distance
 		go net.SendToHi(s.Ctx, common.NewLeaderDistanceResponseCommand(distance, 1), true)
-		updated = true
 	} else {
 		s.Ctx.LeaderDistance[1] = distance
 		go net.SendToLo(s.Ctx, common.NewLeaderDistanceResponseCommand(distance, 0), true)
-		updated = true
-
 	}
 
-	if updated && prevDistances != s.Ctx.LeaderDistance {
+	if prevDistances != s.Ctx.LeaderDistance {
 		logger.Info("Leader distance updated: %v", s.Ctx.LeaderDistance)
-	} else {
-		logger.Warn("Distance received from %v, but it's not in linked peers", sender)
 	}
 }
 
